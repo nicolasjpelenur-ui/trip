@@ -9,7 +9,7 @@ export async function getPeople(): Promise<Person[]> {
   return data
 }
 
-export async function createPerson(person: Omit<Person, 'id' | 'created_at'>) {
+export async function createPerson(person: Omit<Person, 'id' | 'created_at'> & { group?: string }) {
   const { data, error } = await supabase
     .from('people')
     .insert(person)

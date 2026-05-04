@@ -1,12 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-export type PersonGroup = 'us' | 'our_family' | 'partner_family'
-
 export interface Person {
   id: string
   name: string
   color: string
-  group: PersonGroup
   created_at: string
 }
 

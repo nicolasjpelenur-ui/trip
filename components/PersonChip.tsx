@@ -16,6 +16,20 @@ export function PersonChip({ person, small = false }: PersonChipProps) {
   )
 }
 
+export function PersonAvatar({ person, size = 'md', active = true }: { person: Person; size?: 'sm' | 'md' | 'lg'; active?: boolean }) {
+  const initial = person.name.charAt(0).toUpperCase()
+  const dims = size === 'sm' ? 'w-6 h-6 text-[10px]' : size === 'lg' ? 'w-10 h-10 text-base' : 'w-8 h-8 text-xs'
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full font-semibold text-white flex-shrink-0 transition-opacity ${dims} ${active ? 'opacity-100' : 'opacity-30'}`}
+      style={{ backgroundColor: person.color }}
+      title={person.name}
+    >
+      {initial}
+    </span>
+  )
+}
+
 export function PersonDot({ color, size = 10 }: { color: string; size?: number }) {
   return (
     <span
