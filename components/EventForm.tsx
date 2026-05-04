@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getPeople, getLocations, createLocation, createEvent, updateEvent, deleteEvent } from '@/lib/queries'
+import { getPeople, getLocations, createLocation, createEvent, updateEvent, deleteEvent, logActivity } from '@/lib/queries'
 import { Person, Location, EventWithDetails } from '@/lib/supabase'
 import { PersonAvatar } from './PersonChip'
 import { Button } from '@/components/ui/button'
@@ -12,9 +12,10 @@ import { getLocationIcon, LOCATION_ICON_OPTIONS } from '@/lib/locationIcons'
 interface EventFormProps {
   existing?: EventWithDetails
   defaultDate?: string
+  defaultEndDate?: string
 }
 
-export function EventForm({ existing, defaultDate }: EventFormProps) {
+export function EventForm({ existing, defaultDate, defaultEndDate }: EventFormProps) {
   const router = useRouter()
   const [people, setPeople] = useState<Person[]>([])
   const [locations, setLocations] = useState<Location[]>([])
@@ -26,7 +27,7 @@ export function EventForm({ existing, defaultDate }: EventFormProps) {
   const [title, setTitle] = useState(existing?.title ?? '')
   const [locationId, setLocationId] = useState(existing?.location_id ?? '')
   const [startDate, setStartDate] = useState(existing?.start_date ?? defaultDate ?? '')
-  const [endDate, setEndDate] = useState(existing?.end_date ?? defaultDate ?? '')
+  const [endDate, setEndDate] = useState(existing?.end_date ?? defaultEndDate ?? defaultDate ?? '')
   const [notes, setNotes] = useState(existing?.notes ?? '')
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(
     new Set(existing?.participants.map((p) => p.person_id) ?? [])
@@ -86,19 +87,31 @@ export function EventForm({ existing, defaultDate }: EventFormProps) {
       created_by: currentPersonId,
     }
 
-    if (existing) {
-      await updateEvent(existing.id, payload, Array.from(selectedPeople), Array.from(apartmentPeople))
-    } else {
-      await createEvent(payload, Array.from(selectedPeople), Array.from(apartmentPeople))
+    try {
+      if (existing) {
+        await updateEvent(existing.id, payload, Array.from(selectedPeople), Array.from(apartmentPeople))
+        logActivity(currentPersonId ?? null, 'updated_event', title.trim(), 'event', existing.id)
+      } else {
+        const created = await createEvent(payload, Array.from(selectedPeople), Array.from(apartmentPeople))
+        logActivity(currentPersonId ?? null, 'created_event', title.trim(), 'event', created.id)
+      }
+      router.push('/calendar')
+    } finally {
+      setSaving(false)
     }
-    router.push('/calendar')
   }
 
   async function handleDelete() {
     if (!existing) return
     setDeleting(true)
-    await deleteEvent(existing.id)
-    router.push('/calendar')
+    const currentPersonId = localStorage.getItem('currentPersonId')
+    try {
+      await deleteEvent(existing.id)
+      logActivity(currentPersonId ?? null, 'deleted_event', existing.title, 'event', existing.id)
+      router.push('/calendar')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const selectedLocation = locations.find((l) => l.id === locationId)

@@ -26,6 +26,7 @@ function ChatContent() {
   const [newDesc, setNewDesc] = useState('')
   const [newColor, setNewColor] = useState(COLORS[0])
   const [newMembers, setNewMembers] = useState<Set<string>>(new Set())
+  const [newPrivate, setNewPrivate] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const currentPersonId = typeof window !== 'undefined' ? localStorage.getItem('currentPersonId') : null
@@ -60,11 +61,11 @@ function ChatContent() {
   async function handleCreate() {
     if (!newName.trim()) return
     setSaving(true)
-    const g = await createGroup(newName.trim(), newColor, newDesc, Array.from(newMembers), currentPersonId)
+    const g = await createGroup(newName.trim(), newColor, newDesc, Array.from(newMembers), currentPersonId, newPrivate)
     const gw = await getGroupWithMembers(g.id)
     setGroups((prev) => [gw, ...prev])
     setCreating(false)
-    setNewName(''); setNewDesc(''); setNewMembers(new Set())
+    setNewName(''); setNewDesc(''); setNewMembers(new Set()); setNewPrivate(false)
     setSaving(false)
     router.push(`/chat/${g.id}`)
   }
@@ -116,6 +117,19 @@ function ChatContent() {
                     style={{ backgroundColor: c }} />
                 ))}
               </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-[#1a1614]">Private group</p>
+                <p className="text-[11px] text-[#9c8b75]">Only members with passwords can read it</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewPrivate((v) => !v)}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 relative ${newPrivate ? 'bg-[#5b4cf5]' : 'bg-[#ede8e0]'}`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${newPrivate ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              </button>
             </div>
             <div>
               <p className="text-xs text-[#9c8b75] mb-2">Add members</p>

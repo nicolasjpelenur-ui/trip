@@ -1,10 +1,22 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, Fragment } from 'react'
+import { isSameDay, isToday, format, parseISO } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { Message, getMessages, sendMessage } from '@/lib/chatQueries'
 import { MessageBubble } from './MessageBubble'
-import { Send } from 'lucide-react'
+import { MessageSquare, Send } from 'lucide-react'
+
+function DateSeparator({ date }: { date: Date }) {
+  const label = isToday(date) ? 'Today' : format(date, 'EEE, MMM d')
+  return (
+    <div className="flex items-center gap-3 py-2 select-none">
+      <div className="flex-1 h-px bg-[#ede8e0]" />
+      <span className="text-[10px] text-[#9c8b75] font-medium tracking-wide uppercase">{label}</span>
+      <div className="flex-1 h-px bg-[#ede8e0]" />
+    </div>
+  )
+}
 
 interface ChatRoomProps {
   groupId: string
@@ -72,23 +84,30 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center text-[#9c8b75] text-sm py-12">
-            <div className="w-12 h-12 rounded-2xl bg-[#f3efe8] flex items-center justify-center mx-auto mb-3">
-              <Send className="w-5 h-5 text-[#9c8b75]" />
+          <div className="text-center text-[#9c8b75] text-sm py-16 flex flex-col items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-[#f3efe8] flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-[#c9b99f]" />
             </div>
-            No messages yet — start the conversation
+            <div>
+              <div className="font-medium text-[#1a1614]">No messages yet</div>
+              <div className="text-xs mt-0.5">Start the conversation below</div>
+            </div>
           </div>
         )}
         {messages.map((msg, i) => {
           const prev = messages[i - 1]
-          const showAvatar = !prev || prev.person_id !== msg.person_id
+          const msgDate = parseISO(msg.created_at)
+          const showDateSep = !prev || !isSameDay(parseISO(prev.created_at), msgDate)
+          const showAvatar = !prev || prev.person_id !== msg.person_id || showDateSep
           return (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isOwn={msg.person_id === currentPersonId}
-              showAvatar={showAvatar}
-            />
+            <Fragment key={msg.id}>
+              {showDateSep && <DateSeparator date={msgDate} />}
+              <MessageBubble
+                message={msg}
+                isOwn={msg.person_id === currentPersonId}
+                showAvatar={showAvatar}
+              />
+            </Fragment>
           )
         })}
         <div ref={bottomRef} />

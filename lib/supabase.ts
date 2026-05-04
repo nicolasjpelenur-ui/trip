@@ -4,7 +4,21 @@ export interface Person {
   id: string
   name: string
   color: string
+  status: string
+  email: string | null
+  auth_user_id: string | null
   created_at: string
+}
+
+export interface ActivityLog {
+  id: string
+  person_id: string | null
+  action: string
+  description: string
+  entity_type: string | null
+  entity_id: string | null
+  created_at: string
+  person?: Person | null
 }
 
 export interface Location {

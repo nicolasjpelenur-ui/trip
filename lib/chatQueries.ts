@@ -5,6 +5,7 @@ export interface Group {
   name: string
   color: string
   description: string | null
+  is_private: boolean
   created_by: string | null
   created_at: string
 }
@@ -71,11 +72,12 @@ export async function createGroup(
   color: string,
   description: string,
   memberIds: string[],
-  createdBy: string | null
+  createdBy: string | null,
+  isPrivate = false
 ): Promise<Group> {
   const { data, error } = await supabase
     .from('groups')
-    .insert({ name, color, description: description || null, created_by: createdBy })
+    .insert({ name, color, description: description || null, created_by: createdBy, is_private: isPrivate })
     .select()
     .single()
   if (error) throw error

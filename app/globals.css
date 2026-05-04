@@ -172,3 +172,21 @@
   animation: shimmer 1.4s infinite;
   border-radius: 6px;
 }
+
+/* ── Desktop sidebar layout ── */
+@media (min-width: 768px) {
+  .page-content {
+    padding-left: 208px;
+    transition: padding-left 0.2s ease;
+  }
+  html.sidebar-collapsed .page-content {
+    padding-left: 56px;
+  }
+}
+
+/* ── Presence pulse ── */
+@keyframes presencePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-presence { animation: presencePulse 2s ease-in-out infinite; }

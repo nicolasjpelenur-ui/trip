@@ -44,44 +44,51 @@ export function NavBar() {
     checkUnread()
   }, [pathname])
 
-  const navLink = (href: string, label: string) => {
+  const navLink = (href: string, label: string, badge?: boolean) => {
     const active = pathname === href || pathname.startsWith(href + '/')
     return (
-      <Link href={href}
-        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-          active ? 'bg-[#5b4cf5]/10 text-[#5b4cf5]' : 'text-[#9c8b75] hover:bg-[#f3efe8] hover:text-[#1a1614]'
-        }`}>
-        {label}
-      </Link>
+      <div className="relative">
+        <Link href={href}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            active ? 'bg-[#5b4cf5]/10 text-[#5b4cf5]' : 'text-[#9c8b75] hover:bg-[#f3efe8] hover:text-[#1a1614]'
+          }`}>
+          {label}
+        </Link>
+        {badge && (
+          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#e8724a] pointer-events-none" />
+        )}
+      </div>
     )
   }
 
   return (
-    <nav className="bg-white border-b border-[#ede8e0] px-4 py-2.5 flex items-center justify-between">
-      <div className="flex items-center gap-1">
+    <nav className="md:hidden bg-white border-b border-[#ede8e0] px-4 py-2.5 flex items-center justify-between">
+      <div className="flex items-center gap-1 flex-wrap">
         <div className="w-7 h-7 rounded-lg bg-[#5b4cf5] flex items-center justify-center mr-2 flex-shrink-0">
           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
         </div>
         {navLink('/calendar', 'Calendar')}
-        <div className="relative">
-          {navLink('/chat', 'Chat')}
-          {chatUnread && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#e8724a] pointer-events-none" />
-          )}
-        </div>
+        {navLink('/chat', 'Chat', chatUnread)}
+        {navLink('/arc', 'Arc')}
+        {navLink('/activity', 'Activity')}
         {navLink('/people', 'People')}
       </div>
 
       <div className="flex items-center gap-2">
         <Link href="/events/new"
-          className="bg-[#5b4cf5] text-white text-sm font-medium px-3 py-1.5 rounded-xl hover:bg-[#4a3dd4] transition-colors">
+          className="bg-[#5b4cf5] text-white text-sm font-medium px-3 py-1.5 rounded-xl hover:bg-[#4a3dd4] transition-colors whitespace-nowrap">
           + Event
         </Link>
         {userName && (
           <button
-            onClick={() => { localStorage.removeItem('currentPersonId'); localStorage.removeItem('currentPersonName'); router.push('/') }}
+            onClick={() => {
+              supabase.auth.signOut()
+              localStorage.removeItem('currentPersonId')
+              localStorage.removeItem('currentPersonName')
+              router.push('/')
+            }}
             className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full hover:bg-[#f3efe8] transition-colors"
             title="Switch user"
           >

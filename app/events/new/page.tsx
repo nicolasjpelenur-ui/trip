@@ -11,6 +11,8 @@ import Link from 'next/link'
 function NewEventContent() {
   const params = useSearchParams()
   const date = params.get('date') ?? undefined
+  const start = params.get('start') ?? date
+  const end = params.get('end') ?? date
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
@@ -20,7 +22,7 @@ function NewEventContent() {
         </Link>
         <h1 className="text-xl font-bold text-[#1a1614]">New event</h1>
       </div>
-      <EventForm defaultDate={date} />
+      <EventForm defaultDate={start ?? undefined} defaultEndDate={end ?? undefined} />
     </div>
   )
 }

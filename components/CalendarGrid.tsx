@@ -1,17 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isToday, isSameDay,
   isWithinInterval, parseISO, format, eachWeekOfInterval,
-  addDays, addMonths, getDay,
+  addDays, addMonths, getDay, min, max,
 } from 'date-fns'
 import { EventWithDetails } from '@/lib/supabase'
 import { EventModal } from './EventModal'
 import { useTripContext } from './RealtimeProvider'
-import { getLocationIcon } from '@/lib/locationIcons'
-import { LayoutGrid, Columns2 } from 'lucide-react'
+import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
+import { updateEventDates } from '@/lib/queries'
+import { LayoutGrid, Columns2, Users, MapPin } from 'lucide-react'
 
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const EVENT_ROW_H = 20
@@ -34,7 +36,7 @@ interface WeekBar {
   endsHere: boolean
 }
 
-function getWeekBars(events: EventWithDetails[], weekStart: Date): WeekBar[] {
+function getWeekBars(events: EventWithDetails[], weekStart: Date, previewResizeId?: string, previewResizeEnd?: Date): WeekBar[] {
   const weekEnd = addDays(weekStart, 6)
   const rows: (string | null)[] = [null, null, null, null]
   const bars: WeekBar[] = []
@@ -45,9 +47,11 @@ function getWeekBars(events: EventWithDetails[], weekStart: Date): WeekBar[] {
 
   for (const event of relevant) {
     const start = parseISO(event.start_date)
-    const end = parseISO(event.end_date)
+    // Use preview end if we're resizing this event
+    const end = (previewResizeId === event.id && previewResizeEnd) ? previewResizeEnd : parseISO(event.end_date)
     const cStart = start < weekStart ? weekStart : start
     const cEnd = end > weekEnd ? weekEnd : end
+    if (cEnd < cStart) continue
     const colStart = getDay(cStart)
     const colSpan = getDay(cEnd) - colStart + 1
     const row = rows.findIndex((r) => r === null || r === event.id)
@@ -59,29 +63,118 @@ function getWeekBars(events: EventWithDetails[], weekStart: Date): WeekBar[] {
   return bars
 }
 
+interface ResizeState {
+  eventId: string
+  startX: number
+  weekStart: Date
+  weekRowWidth: number
+  origStartDate: string
+  origEndDate: string
+  previewEndDate: Date
+}
+
 function MonthGrid({
-  month, events, onDayClick, compact = false,
+  month, events, onDayClick, compact = false, colorMode = 'person', onRefresh,
 }: {
   month: Date
   events: EventWithDetails[]
   onDayClick: (d: Date) => void
   compact?: boolean
+  colorMode?: 'person' | 'location'
+  onRefresh: () => void
 }) {
+  const router = useRouter()
+  const [dragStart, setDragStart] = useState<Date | null>(null)
+  const [dragEnd, setDragEnd] = useState<Date | null>(null)
+  const [resizing, setResizing] = useState<ResizeState | null>(null)
+  const weekRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
   const weeks = eachWeekOfInterval({
     start: startOfWeek(startOfMonth(month)),
     end: endOfWeek(endOfMonth(month)),
   })
 
+  // Day drag-select helpers
+  const dragMin = dragStart && dragEnd ? min([dragStart, dragEnd]) : null
+  const dragMax = dragStart && dragEnd ? max([dragStart, dragEnd]) : null
+
+  function isDragHighlighted(day: Date) {
+    if (!dragMin || !dragMax) return false
+    return isWithinInterval(day, { start: dragMin, end: dragMax })
+  }
+
+  function handleDayPointerDown(day: Date) {
+    setDragStart(day)
+    setDragEnd(day)
+  }
+
+  function handleDayPointerEnter(day: Date) {
+    if (dragStart) setDragEnd(day)
+  }
+
+  function handleDayPointerUp(day: Date) {
+    if (dragStart && dragEnd && !isSameDay(dragStart, dragEnd)) {
+      const s = format(min([dragStart, dragEnd]), 'yyyy-MM-dd')
+      const e = format(max([dragStart, dragEnd]), 'yyyy-MM-dd')
+      router.push(`/events/new?start=${s}&end=${e}`)
+    } else {
+      onDayClick(day)
+    }
+    setDragStart(null)
+    setDragEnd(null)
+  }
+
+  // Resize helpers
+  const handleResizePointerDown = useCallback((
+    e: React.PointerEvent,
+    event: EventWithDetails,
+    weekStart: Date,
+  ) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const rowKey = weekStart.toISOString()
+    const rowEl = weekRefs.current.get(rowKey)
+    if (!rowEl) return
+    const rowRect = rowEl.getBoundingClientRect()
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    setResizing({
+      eventId: event.id,
+      startX: e.clientX,
+      weekStart,
+      weekRowWidth: rowRect.width,
+      origStartDate: event.start_date,
+      origEndDate: event.end_date,
+      previewEndDate: parseISO(event.end_date),
+    })
+  }, [])
+
+  const handleResizePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!resizing) return
+    const dayWidth = resizing.weekRowWidth / 7
+    const dayDelta = Math.round((e.clientX - resizing.startX) / dayWidth)
+    const newEnd = addDays(parseISO(resizing.origEndDate), dayDelta)
+    const minEnd = parseISO(resizing.origStartDate)
+    setResizing((r) => r ? { ...r, previewEndDate: newEnd < minEnd ? minEnd : newEnd } : null)
+  }, [resizing])
+
+  const handleResizePointerUp = useCallback(async () => {
+    if (!resizing) return
+    const newEnd = format(resizing.previewEndDate, 'yyyy-MM-dd')
+    if (newEnd !== resizing.origEndDate) {
+      await updateEventDates(resizing.eventId, resizing.origStartDate, newEnd)
+      onRefresh()
+    }
+    setResizing(null)
+  }, [resizing, onRefresh])
+
   return (
     <div className="flex flex-col flex-1 min-w-0">
-      {/* Month label (compact mode) */}
       {compact && (
         <div className="text-center text-sm font-semibold text-[#1a1614] py-2 border-b border-[#ede8e0]">
           {format(month, 'MMMM yyyy')}
         </div>
       )}
 
-      {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-[#ede8e0]">
         {DAY_HEADERS.map((d, i) => (
           <div key={i} className="text-center text-[10px] font-semibold text-[#9c8b75] py-1.5 uppercase tracking-wider">
@@ -90,26 +183,55 @@ function MonthGrid({
         ))}
       </div>
 
-      {/* Weeks */}
       <div className="flex-1">
         {weeks.map((weekStart) => {
           const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) })
-          const bars = getWeekBars(events, weekStart)
+          const bars = getWeekBars(
+            events, weekStart,
+            resizing?.eventId,
+            resizing?.weekStart.toISOString() === weekStart.toISOString() ? resizing?.previewEndDate : undefined,
+          )
+          const rowKey = weekStart.toISOString()
 
           return (
-            <div key={weekStart.toISOString()} className="relative border-b border-[#ede8e0] last:border-0">
+            <div
+              key={rowKey}
+              ref={(el) => { if (el) weekRefs.current.set(rowKey, el) }}
+              className="relative border-b border-[#ede8e0] last:border-0"
+              onPointerMove={resizing ? handleResizePointerMove : undefined}
+              onPointerUp={resizing ? handleResizePointerUp : undefined}
+            >
               <div className="grid grid-cols-7">
                 {days.map((day) => {
                   const inMonth = isSameMonth(day, month)
                   const today = isToday(day)
                   const dayCount = getEventsForDay(events, day).length
                   const overflow = dayCount - MAX_ROWS
+                  const highlighted = isDragHighlighted(day)
+
+                  if (compact && !inMonth) {
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        className="border-r border-[#ede8e0] last:border-r-0 bg-[#faf8f5]/60"
+                        style={{ minHeight: 70 }}
+                      />
+                    )
+                  }
 
                   return (
                     <button
                       key={day.toISOString()}
-                      onClick={() => onDayClick(day)}
-                      className={`border-r border-[#ede8e0] last:border-r-0 text-left hover:bg-[#f3efe8]/60 active:bg-[#ede8e0] transition-colors ${!inMonth ? 'opacity-30' : ''}`}
+                      onPointerDown={() => handleDayPointerDown(day)}
+                      onPointerEnter={() => handleDayPointerEnter(day)}
+                      onPointerUp={() => handleDayPointerUp(day)}
+                      className={`border-r border-[#ede8e0] last:border-r-0 text-left transition-colors select-none ${
+                        highlighted
+                          ? 'bg-[#5b4cf5]/10'
+                          : !inMonth
+                            ? 'opacity-30 hover:bg-[#f3efe8]/60'
+                            : 'hover:bg-[#f3efe8]/60 active:bg-[#ede8e0]'
+                      }`}
                       style={{ minHeight: compact ? 70 : 88, padding: '3px 3px 2px 3px' }}
                     >
                       <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${
@@ -129,34 +251,54 @@ function MonthGrid({
               {/* Event bars overlay */}
               <div className="absolute inset-0 pointer-events-none" style={{ top: 30 }}>
                 {bars.map(({ event, colStart, colSpan, row, startsHere, endsHere }) => {
-                  const p0 = event.participants[0]
-                  if (!p0) return null
+                  if (event.participants.length === 0) return null
+                  const locationColor = getLocationColor(event.location.id)
+                  const personColors = event.participants.map((p) => p.person.color)
+                  const bgStyle = colorMode === 'location'
+                    ? { backgroundColor: locationColor }
+                    : personColors.length === 1
+                      ? { backgroundColor: personColors[0] }
+                      : { background: `linear-gradient(to right, ${personColors.join(', ')})` }
                   const Icon = getLocationIcon(event.location.emoji)
                   const PAD = 2
+                  const isBeingResized = resizing?.eventId === event.id
+
                   return (
                     <div
-                      key={`${event.id}-${weekStart.toISOString()}`}
-                      className="absolute pointer-events-auto cursor-pointer hover:brightness-90 transition-all animate-bar"
+                      key={`${event.id}-${rowKey}`}
+                      className={`absolute pointer-events-auto cursor-pointer hover:brightness-90 transition-all ${isBeingResized ? '' : 'animate-bar'}`}
                       style={{
                         left: `calc(${(colStart / 7) * 100}% + ${startsHere ? PAD : 0}px)`,
                         width: `calc(${(colSpan / 7) * 100}% - ${(startsHere ? PAD : 0) + (endsHere ? PAD : 0)}px)`,
                         top: row * EVENT_ROW_H + 1,
                         height: EVENT_ROW_H - 3,
-                        backgroundColor: p0.person.color,
+                        ...bgStyle,
                         borderRadius: `${startsHere ? 4 : 0}px ${endsHere ? 4 : 0}px ${endsHere ? 4 : 0}px ${startsHere ? 4 : 0}px`,
                         display: 'flex', alignItems: 'center',
                         paddingLeft: startsHere ? 4 : 1,
-                        paddingRight: 3,
+                        paddingRight: endsHere ? 8 : 3,
                         overflow: 'hidden',
                         zIndex: 10,
+                        opacity: isBeingResized ? 0.85 : 1,
                       }}
-                      onClick={() => onDayClick(days[colStart])}
+                      onClick={() => !resizing && onDayClick(days[colStart])}
                     >
                       {startsHere && (
                         <>
                           <Icon className="text-white/70 flex-shrink-0" style={{ width: 9, height: 9, marginRight: 2 }} />
                           <span className="text-white text-[9px] font-medium truncate leading-none">{event.title}</span>
                         </>
+                      )}
+                      {/* Resize handle */}
+                      {endsHere && (
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize flex items-center justify-center"
+                          style={{ zIndex: 20 }}
+                          onPointerDown={(e) => handleResizePointerDown(e, event, weekStart)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="w-0.5 h-3 bg-white/50 rounded-full" />
+                        </div>
                       )}
                     </div>
                   )
@@ -171,10 +313,11 @@ function MonthGrid({
 }
 
 export function CalendarGrid() {
-  const { events, currentMonth, setCurrentMonth, loading, people, setExtraMonth } = useTripContext()
+  const { events, currentMonth, setCurrentMonth, loading, people, setExtraMonth, onlinePersonIds, refresh } = useTripContext()
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [activePeople, setActivePeople] = useState<Set<string> | null>(null)
   const [viewMode, setViewMode] = useState<'1' | '2'>('1')
+  const [colorMode, setColorMode] = useState<'person' | 'location'>('person')
 
   function toggleViewMode() {
     const next = viewMode === '1' ? '2' : '1'
@@ -214,7 +357,7 @@ export function CalendarGrid() {
           </svg>
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           <h2 className="text-sm font-semibold text-[#1a1614] tracking-tight">
             {viewMode === '2'
               ? `${format(currentMonth, 'MMM')} – ${format(nextMonth, 'MMM yyyy')}`
@@ -228,7 +371,17 @@ export function CalendarGrid() {
             title="Toggle dual-month view"
           >
             {viewMode === '2' ? <Columns2 className="w-3.5 h-3.5" /> : <LayoutGrid className="w-3.5 h-3.5" />}
-            <span>{viewMode === '2' ? '2 months' : '1 month'}</span>
+            <span>{viewMode === '2' ? '2mo' : '1mo'}</span>
+          </button>
+          <button
+            onClick={() => setColorMode((m) => m === 'person' ? 'location' : 'person')}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              colorMode === 'location' ? 'bg-[#e8724a] text-white' : 'bg-[#f3efe8] text-[#9c8b75] hover:bg-[#ede8e0]'
+            }`}
+            title="Toggle color by person / location"
+          >
+            {colorMode === 'location' ? <MapPin className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+            <span>{colorMode === 'location' ? 'place' : 'person'}</span>
           </button>
         </div>
 
@@ -254,10 +407,15 @@ export function CalendarGrid() {
                 border: `1.5px solid ${activeIds.has(p.id) ? p.color + '55' : 'transparent'}`,
               }}
             >
-              <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
-                style={{ backgroundColor: activeIds.has(p.id) ? p.color : '#d4c9b8' }}>
-                {p.name.charAt(0)}
-              </span>
+              <div className="relative">
+                <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                  style={{ backgroundColor: activeIds.has(p.id) ? p.color : '#d4c9b8' }}>
+                  {p.name.charAt(0)}
+                </span>
+                {onlinePersonIds.has(p.id) && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-400 border border-white" />
+                )}
+              </div>
               {p.name.split(' ')[0]}
             </button>
           ))}
@@ -267,9 +425,9 @@ export function CalendarGrid() {
 
       {/* Calendar body */}
       <div className={`flex-1 overflow-y-auto ${viewMode === '2' ? 'grid grid-cols-2 sm:grid-cols-2 divide-x divide-[#ede8e0]' : 'flex flex-col'}`}>
-        <MonthGrid month={currentMonth} events={filteredEvents} onDayClick={setSelectedDay} compact={viewMode === '2'} />
+        <MonthGrid month={currentMonth} events={filteredEvents} onDayClick={setSelectedDay} compact={viewMode === '2'} colorMode={colorMode} onRefresh={refresh} />
         {viewMode === '2' && (
-          <MonthGrid month={nextMonth} events={filteredEvents} onDayClick={setSelectedDay} compact />
+          <MonthGrid month={nextMonth} events={filteredEvents} onDayClick={setSelectedDay} compact colorMode={colorMode} onRefresh={refresh} />
         )}
       </div>
 

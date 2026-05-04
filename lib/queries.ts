@@ -1,4 +1,4 @@
-import { supabase, EventWithDetails, Person, Location } from './supabase'
+import { supabase, EventWithDetails, Person, Location, ActivityLog } from './supabase'
 
 export async function getPeople(): Promise<Person[]> {
   const { data, error } = await supabase
@@ -9,7 +9,7 @@ export async function getPeople(): Promise<Person[]> {
   return data
 }
 
-export async function createPerson(person: Omit<Person, 'id' | 'created_at'> & { group?: string }) {
+export async function createPerson(person: Pick<Person, 'name' | 'color'> & { group?: string }) {
   const { data, error } = await supabase
     .from('people')
     .insert(person)
@@ -130,4 +130,52 @@ export async function updateEvent(
 export async function deleteEvent(id: string) {
   const { error } = await supabase.from('events').delete().eq('id', id)
   if (error) throw error
+}
+
+export async function updateEventDates(id: string, startDate: string, endDate: string) {
+  const { error } = await supabase
+    .from('events')
+    .update({ start_date: startDate, end_date: endDate, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function getAllEvents(): Promise<EventWithDetails[]> {
+  const { data, error } = await supabase
+    .from('events')
+    .select(`*, location:locations(*), participants:event_participants(*, person:people(*))`)
+    .order('start_date')
+  if (error) throw error
+  return data as EventWithDetails[]
+}
+
+export async function updatePersonStatus(id: string, status: string) {
+  const { error } = await supabase.from('people').update({ status }).eq('id', id)
+  if (error) throw error
+}
+
+export async function logActivity(
+  personId: string | null,
+  action: string,
+  description: string,
+  entityType?: string,
+  entityId?: string
+) {
+  await supabase.from('activity_log').insert({
+    person_id: personId,
+    action,
+    description,
+    entity_type: entityType ?? null,
+    entity_id: entityId ?? null,
+  })
+}
+
+export async function getActivityLog(limit = 50): Promise<ActivityLog[]> {
+  const { data, error } = await supabase
+    .from('activity_log')
+    .select('*, person:people(*)')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data as ActivityLog[]
 }

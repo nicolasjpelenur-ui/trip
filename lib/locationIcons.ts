@@ -1,5 +1,18 @@
 import { Home, Landmark, MapPin, Plane, Mountain, Building2, LucideIcon } from 'lucide-react'
 
+const LOCATION_COLORS = [
+  '#5b4cf5', '#e8724a', '#10b981', '#f59e0b',
+  '#ec4899', '#3b82f6', '#a855f7', '#14b8a6',
+]
+
+export function getLocationColor(locationId: string): string {
+  // Stable color per location derived from UUID characters
+  const hex = locationId.replace(/-/g, '')
+  const n = parseInt(hex.slice(-4), 16)
+  return LOCATION_COLORS[n % LOCATION_COLORS.length]
+}
+
+
 const ICON_MAP: Record<string, LucideIcon> = {
   'home': Home,
   'landmark': Landmark,

@@ -8,7 +8,7 @@ import { PersonAvatar } from './PersonChip'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { getLocationIcon } from '@/lib/locationIcons'
-import { deleteEvent } from '@/lib/queries'
+import { deleteEvent, logActivity } from '@/lib/queries'
 import { getPeople } from '@/lib/queries'
 import { EventComments } from './EventComments'
 import { Pencil, Trash2 } from 'lucide-react'
@@ -40,10 +40,16 @@ export function EventModal({ date, events, onClose }: EventModalProps) {
 
   async function handleDelete(id: string) {
     setDeleting(true)
-    await deleteEvent(id)
-    setConfirmDelete(null)
-    setDeleting(false)
-    onClose()
+    const personId = localStorage.getItem('currentPersonId')
+    const event = events.find((e) => e.id === id)
+    try {
+      await deleteEvent(id)
+      if (event) logActivity(personId, 'deleted_event', event.title, 'event', id)
+      setConfirmDelete(null)
+      onClose()
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (

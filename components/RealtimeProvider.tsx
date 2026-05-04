@@ -5,6 +5,13 @@ import { supabase, Person, Location, EventWithDetails } from '@/lib/supabase'
 import { getPeople, getLocations, getEventsInRange } from '@/lib/queries'
 import { startOfMonth, endOfMonth, addMonths, format } from 'date-fns'
 
+export interface PresenceEntry {
+  personId: string
+  name: string
+  color: string
+  page: string
+}
+
 interface TripContextValue {
   people: Person[]
   locations: Location[]
@@ -15,6 +22,7 @@ interface TripContextValue {
   loading: boolean
   extraMonth: boolean
   setExtraMonth: (v: boolean) => void
+  onlinePersonIds: Set<string>
 }
 
 const TripContext = createContext<TripContextValue | null>(null)
@@ -32,6 +40,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const [locations, setLocations] = useState<Location[]>([])
   const [events, setEvents] = useState<EventWithDetails[]>([])
   const [loading, setLoading] = useState(true)
+  const [onlinePersonIds, setOnlinePersonIds] = useState<Set<string>>(new Set())
 
   const refresh = useCallback(async () => {
     const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd')
@@ -64,8 +73,45 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return () => { supabase.removeChannel(channel) }
   }, [refresh])
 
+  // Presence tracking
+  useEffect(() => {
+    const personId = typeof window !== 'undefined' ? localStorage.getItem('currentPersonId') : null
+    const personName = typeof window !== 'undefined' ? localStorage.getItem('currentPersonName') : null
+    if (!personId || !personName) return
+
+    const presenceChannel = supabase.channel('trip-presence', {
+      config: { presence: { key: personId } },
+    })
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState<PresenceEntry>()
+        const ids = new Set<string>()
+        for (const entries of Object.values(state)) {
+          for (const e of entries) {
+            if (e.personId) ids.add(e.personId)
+          }
+        }
+        setOnlinePersonIds(ids)
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Fetch color for current person
+          const { data } = await supabase.from('people').select('color').eq('id', personId).single()
+          await presenceChannel.track({
+            personId,
+            name: personName,
+            color: data?.color ?? '#5b4cf5',
+            page: window.location.pathname,
+          })
+        }
+      })
+
+    return () => { supabase.removeChannel(presenceChannel) }
+  }, [])
+
   return (
-    <TripContext.Provider value={{ people, locations, events, currentMonth, setCurrentMonth, refresh, loading, extraMonth, setExtraMonth }}>
+    <TripContext.Provider value={{ people, locations, events, currentMonth, setCurrentMonth, refresh, loading, extraMonth, setExtraMonth, onlinePersonIds }}>
       {children}
     </TripContext.Provider>
   )

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import { DesktopSidebar } from "@/components/DesktopSidebar";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -16,7 +17,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className={`${geist.className} min-h-full bg-gray-50`}>{children}</body>
+      <body className={`${geist.className} min-h-full bg-[#faf8f5]`}>
+        <DesktopSidebar />
+        <div className="page-content min-h-screen">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }

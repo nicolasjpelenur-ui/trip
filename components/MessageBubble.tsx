@@ -1,6 +1,6 @@
 import { Message } from '@/lib/chatQueries'
 import { PersonAvatar } from './PersonChip'
-import { formatDistanceToNow, parseISO } from 'date-fns'
+import { formatDistanceToNow, format, parseISO } from 'date-fns'
 
 interface MessageBubbleProps {
   message: Message
@@ -9,7 +9,9 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
-  const time = formatDistanceToNow(parseISO(message.created_at), { addSuffix: true })
+  const date = parseISO(message.created_at)
+  const time = formatDistanceToNow(date, { addSuffix: true })
+  const fullTime = format(date, 'PPp')
 
   return (
     <div className={`flex items-end gap-2 animate-message ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -34,7 +36,7 @@ export function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps
         >
           {message.content}
         </div>
-        <span className="text-[10px] text-[#9c8b75] px-1">{time}</span>
+        <span className="text-[10px] text-[#9c8b75] px-1 cursor-default" title={fullTime}>{time}</span>
       </div>
     </div>
   )
