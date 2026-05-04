@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { supabase, Person, Location, EventWithDetails } from '@/lib/supabase'
 import { getPeople, getLocations, getEventsInRange } from '@/lib/queries'
-import { startOfMonth, endOfMonth, format } from 'date-fns'
+import { startOfMonth, endOfMonth, addMonths, format } from 'date-fns'
 
 interface TripContextValue {
   people: Person[]
@@ -13,6 +13,8 @@ interface TripContextValue {
   setCurrentMonth: (d: Date) => void
   refresh: () => Promise<void>
   loading: boolean
+  extraMonth: boolean
+  setExtraMonth: (v: boolean) => void
 }
 
 const TripContext = createContext<TripContextValue | null>(null)
@@ -25,6 +27,7 @@ export function useTripContext() {
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [extraMonth, setExtraMonth] = useState(false)
   const [people, setPeople] = useState<Person[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [events, setEvents] = useState<EventWithDetails[]>([])
@@ -32,7 +35,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd')
-    const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd')
+    const endMonth = extraMonth ? addMonths(currentMonth, 1) : currentMonth
+    const end = format(endOfMonth(endMonth), 'yyyy-MM-dd')
     const [p, l, e] = await Promise.all([
       getPeople(),
       getLocations(),
@@ -42,7 +46,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     setLocations(l)
     setEvents(e)
     setLoading(false)
-  }, [currentMonth])
+  }, [currentMonth, extraMonth])
 
   useEffect(() => {
     setLoading(true)
@@ -61,7 +65,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   return (
-    <TripContext.Provider value={{ people, locations, events, currentMonth, setCurrentMonth, refresh, loading }}>
+    <TripContext.Provider value={{ people, locations, events, currentMonth, setCurrentMonth, refresh, loading, extraMonth, setExtraMonth }}>
       {children}
     </TripContext.Provider>
   )
