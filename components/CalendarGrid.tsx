@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isToday, isSameDay,
@@ -74,16 +73,16 @@ interface ResizeState {
 }
 
 function MonthGrid({
-  month, events, onDayClick, compact = false, colorMode = 'person', onRefresh,
+  month, events, onDayClick, onRangeSelect, compact = false, colorMode = 'person', onRefresh,
 }: {
   month: Date
   events: EventWithDetails[]
   onDayClick: (d: Date) => void
+  onRangeSelect: (start: string, end: string) => void
   compact?: boolean
   colorMode?: 'person' | 'location'
   onRefresh: () => void
 }) {
-  const router = useRouter()
   const [dragStart, setDragStart] = useState<Date | null>(null)
   const [dragEnd, setDragEnd] = useState<Date | null>(null)
   const [resizing, setResizing] = useState<ResizeState | null>(null)
@@ -116,7 +115,7 @@ function MonthGrid({
     if (dragStart && dragEnd && !isSameDay(dragStart, dragEnd)) {
       const s = format(min([dragStart, dragEnd]), 'yyyy-MM-dd')
       const e = format(max([dragStart, dragEnd]), 'yyyy-MM-dd')
-      router.push(`/events/new?start=${s}&end=${e}`)
+      onRangeSelect(s, e)
     } else {
       onDayClick(day)
     }
@@ -315,6 +314,7 @@ function MonthGrid({
 export function CalendarGrid() {
   const { events, currentMonth, setCurrentMonth, loading, people, setViewMonths, onlinePersonIds, refresh } = useTripContext()
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [createRange, setCreateRange] = useState<{ start: string; end: string } | null>(null)
   const [activePeople, setActivePeople] = useState<Set<string> | null>(null)
   const [viewCount, setViewCount] = useState(1)
   const [colorMode, setColorMode] = useState<'person' | 'location'>('person')
@@ -537,17 +537,17 @@ export function CalendarGrid() {
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 divide-x divide-[#ede8e0]">
             {months.map((m) => (
-              <MonthGrid key={m.toISOString()} month={m} events={filteredEvents} onDayClick={setSelectedDay} compact colorMode={colorMode} onRefresh={refresh} />
+              <MonthGrid key={m.toISOString()} month={m} events={filteredEvents} onDayClick={setSelectedDay} onRangeSelect={(s, e) => { setCreateRange({ start: s, end: e }); setSelectedDay(parseISO(s)) }} compact colorMode={colorMode} onRefresh={refresh} />
             ))}
           </div>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto flex flex-col">
-          <MonthGrid month={currentMonth} events={filteredEvents} onDayClick={setSelectedDay} compact={false} colorMode={colorMode} onRefresh={refresh} />
+          <MonthGrid month={currentMonth} events={filteredEvents} onDayClick={setSelectedDay} onRangeSelect={(s, e) => { setCreateRange({ start: s, end: e }); setSelectedDay(parseISO(s)) }} compact={false} colorMode={colorMode} onRefresh={refresh} />
         </div>
       )}
 
-      <EventModal date={selectedDay} events={selectedEvents} onClose={() => setSelectedDay(null)} onRefresh={refresh} />
+      <EventModal date={selectedDay} events={selectedEvents} createRange={createRange} onClose={() => { setSelectedDay(null); setCreateRange(null) }} onRefresh={refresh} />
     </div>
   )
 }

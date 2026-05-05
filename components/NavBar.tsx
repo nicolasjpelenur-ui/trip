@@ -84,6 +84,7 @@ export function NavBar() {
         </div>
         {navLink('/dashboard', 'Home')}
         {navLink('/calendar', 'Calendar')}
+        {navLink('/itinerary', 'Itinerary')}
         {navLink('/chat', 'Chat', chatUnread)}
         {navLink('/arc', 'Arc')}
         {navLink('/activity', 'Activity')}

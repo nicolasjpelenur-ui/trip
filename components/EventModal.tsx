@@ -17,9 +17,10 @@ interface EventModalProps {
   events: EventWithDetails[]
   onClose: () => void
   onRefresh: () => void
+  createRange?: { start: string; end: string } | null
 }
 
-export function EventModal({ date, events, onClose, onRefresh }: EventModalProps) {
+export function EventModal({ date, events, onClose, onRefresh, createRange }: EventModalProps) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
@@ -43,6 +44,11 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date])
+
+  // When a drag range is provided, jump straight into create mode
+  useEffect(() => {
+    if (createRange) setCreating(true)
+  }, [createRange])
 
   if (!date) return null
 
@@ -99,8 +105,8 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
           <div className="max-h-[70vh] overflow-y-auto -mx-1 px-1">
             <EventForm
               existing={editingEvent}
-              defaultDate={dateStr}
-              defaultEndDate={dateStr}
+              defaultDate={createRange?.start ?? dateStr}
+              defaultEndDate={createRange?.end ?? dateStr}
               onSuccess={handleFormSuccess}
               onCancel={() => { setCreating(false); setEditingId(null) }}
             />
@@ -146,7 +152,7 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
                                 href={`/events/${event.id}`}
                                 className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
                               >
-                                Open planner
+                                Open itinerary
                               </Link>
                             </div>
                           )
@@ -166,8 +172,8 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
                               href={`/events/${event.id}`}
                               className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
                             >
-                              Planner
-                            </Link>
+                              Itinerary
+</Link>
                             <button
                               onClick={() => setEditingId(event.id)}
                               className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium border-l border-[#ede8e0]"

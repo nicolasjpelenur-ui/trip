@@ -8,12 +8,13 @@ import { getMessages } from '@/lib/chatQueries'
 import { openOnboarding } from '@/components/OnboardingHost'
 import {
   CalendarDays, MessageSquare, GitBranch, Activity, HelpCircle,
-  Users, UserRound, ChevronLeft, ChevronRight, Plus, LogOut, LayoutDashboard,
+  Users, UserRound, ChevronLeft, ChevronRight, Plus, LogOut, LayoutDashboard, Map,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/calendar', label: 'Calendar', Icon: CalendarDays },
+  { href: '/itinerary', label: 'Itinerary', Icon: Map },
   { href: '/chat', label: 'Chat', Icon: MessageSquare },
   { href: '/arc', label: 'Arc', Icon: GitBranch },
   { href: '/activity', label: 'Activity', Icon: Activity },
@@ -104,15 +105,15 @@ export function DesktopSidebar() {
 
   return (
     <aside className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-30 bg-white border-r border-[#ede8e0] transition-all duration-200 ${collapsed ? 'w-14' : 'w-52'}`}>
-      {/* Logo */}
-      <div className={`flex items-center h-14 border-b border-[#ede8e0] px-3 ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
+      {/* Logo — click to go to Dashboard */}
+      <Link href="/dashboard" className={`flex items-center h-14 border-b border-[#ede8e0] px-3 hover:bg-[#f3efe8] transition-colors ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
         <div className="w-7 h-7 rounded-lg bg-[#5b4cf5] flex items-center justify-center flex-shrink-0">
           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
         </div>
         {!collapsed && <span className="text-sm font-bold text-[#1a1614] truncate">Trip Coordinator</span>}
-      </div>
+      </Link>
 
       {/* Nav links */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">

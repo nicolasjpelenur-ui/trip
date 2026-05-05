@@ -35,11 +35,18 @@ create index if not exists event_itinerary_items_day_idx
 alter table public.event_itinerary_days enable row level security;
 alter table public.event_itinerary_items enable row level security;
 
-create policy "public_event_itinerary_days"
-  on public.event_itinerary_days for all using (true) with check (true);
-
-create policy "public_event_itinerary_items"
-  on public.event_itinerary_items for all using (true) with check (true);
+do $$ begin
+  if not exists (
+    select 1 from pg_policies where tablename = 'event_itinerary_days' and policyname = 'public_event_itinerary_days'
+  ) then
+    execute 'create policy "public_event_itinerary_days" on public.event_itinerary_days for all using (true) with check (true)';
+  end if;
+  if not exists (
+    select 1 from pg_policies where tablename = 'event_itinerary_items' and policyname = 'public_event_itinerary_items'
+  ) then
+    execute 'create policy "public_event_itinerary_items" on public.event_itinerary_items for all using (true) with check (true)';
+  end if;
+end $$;
 
 alter publication supabase_realtime add table public.event_itinerary_days;
 alter publication supabase_realtime add table public.event_itinerary_items;
