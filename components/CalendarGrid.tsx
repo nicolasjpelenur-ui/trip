@@ -35,19 +35,34 @@ interface WeekBar {
   endsHere: boolean
 }
 
+/** Effective date range for a bar: union of all participant arrival/departure dates */
+function effectiveRange(event: EventWithDetails): { start: string; end: string } {
+  return event.participants.reduce(
+    (acc, p) => ({
+      start: p.arrival_date && p.arrival_date < acc.start ? p.arrival_date : acc.start,
+      end: p.departure_date && p.departure_date > acc.end ? p.departure_date : acc.end,
+    }),
+    { start: event.start_date, end: event.end_date }
+  )
+}
+
 function getWeekBars(events: EventWithDetails[], weekStart: Date, previewResizeId?: string, previewResizeEnd?: Date): WeekBar[] {
   const weekEnd = addDays(weekStart, 6)
   const rows: (string | null)[] = [null, null, null, null]
   const bars: WeekBar[] = []
 
   const relevant = events
-    .filter((e) => parseISO(e.start_date) <= weekEnd && parseISO(e.end_date) >= weekStart)
+    .filter((e) => {
+      const { start: es, end: ee } = effectiveRange(e)
+      return parseISO(es) <= weekEnd && parseISO(ee) >= weekStart
+    })
     .sort((a, b) => parseISO(a.start_date).getTime() - parseISO(b.start_date).getTime())
 
   for (const event of relevant) {
-    const start = parseISO(event.start_date)
+    const { start: effStart, end: effEnd } = effectiveRange(event)
+    const start = parseISO(effStart)
     // Use preview end if we're resizing this event
-    const end = (previewResizeId === event.id && previewResizeEnd) ? previewResizeEnd : parseISO(event.end_date)
+    const end = (previewResizeId === event.id && previewResizeEnd) ? previewResizeEnd : parseISO(effEnd)
     const cStart = start < weekStart ? weekStart : start
     const cEnd = end > weekEnd ? weekEnd : end
     if (cEnd < cStart) continue
@@ -240,7 +255,9 @@ function MonthGrid({
                       </span>
                       <div style={{ height: MAX_ROWS * EVENT_ROW_H }} />
                       {overflow > 0 && (
-                        <div className="text-[9px] text-[#9c8b75] px-0.5">+{overflow}</div>
+                        <div className="text-[9px] font-semibold text-[#5b4cf5] bg-[#5b4cf5]/10 rounded px-1 py-0.5 mx-0.5 leading-none">
+                          +{overflow} more
+                        </div>
                       )}
                     </button>
                   )

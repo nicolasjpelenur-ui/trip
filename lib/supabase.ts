@@ -45,6 +45,8 @@ export interface EventParticipant {
   event_id: string
   person_id: string
   staying_at_apartment: boolean
+  arrival_date: string | null
+  departure_date: string | null
   person?: Person
 }
 

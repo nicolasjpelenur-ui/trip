@@ -110,21 +110,78 @@ export async function updateEvent(
     .eq('id', id)
   if (error) throw error
 
-  await supabase.from('event_participants').delete().eq('event_id', id)
-  if (participantIds.length > 0) {
+  // Fetch existing participants so we don't wipe custom arrival/departure dates
+  const { data: existing } = await supabase
+    .from('event_participants').select('person_id').eq('event_id', id)
+  const existingIds = new Set((existing ?? []).map((p) => p.person_id))
+  const newSet = new Set(participantIds)
+
+  // Remove participants no longer in the list
+  const toRemove = [...existingIds].filter((pid) => !newSet.has(pid))
+  if (toRemove.length > 0) {
+    await supabase.from('event_participants').delete().eq('event_id', id).in('person_id', toRemove)
+  }
+  // Add brand-new participants (no custom dates yet)
+  const toAdd = participantIds.filter((pid) => !existingIds.has(pid))
+  if (toAdd.length > 0) {
     await supabase.from('event_participants').insert(
-      participantIds.map((person_id) => ({
-        event_id: id,
-        person_id,
+      toAdd.map((person_id) => ({
+        event_id: id, person_id,
         staying_at_apartment: stayingAtApartmentIds.includes(person_id),
       }))
     )
   }
+  // Update staying_at_apartment for participants that remain (preserve their dates)
+  const toKeep = participantIds.filter((pid) => existingIds.has(pid))
+  await Promise.all(toKeep.map((pid) =>
+    supabase.from('event_participants')
+      .update({ staying_at_apartment: stayingAtApartmentIds.includes(pid) })
+      .eq('event_id', id).eq('person_id', pid)
+  ))
 
   await supabase.from('event_viewers').delete().eq('event_id', id)
   if (viewerIds.length > 0) {
     await supabase.from('event_viewers').insert(viewerIds.map((person_id) => ({ event_id: id, person_id })))
   }
+}
+
+/** Add or update a single participant's dates on an event. Expands the event
+ *  date range if the participant's stay extends beyond the current window. */
+export async function upsertEventParticipant(
+  eventId: string,
+  personId: string,
+  opts: { staying_at_apartment: boolean; arrival_date: string | null; departure_date: string | null }
+) {
+  const { error } = await supabase
+    .from('event_participants')
+    .upsert(
+      { event_id: eventId, person_id: personId, ...opts },
+      { onConflict: 'event_id,person_id' }
+    )
+  if (error) throw error
+
+  // Expand event window if participant dates are outside it
+  const { data: ev } = await supabase
+    .from('events').select('start_date,end_date').eq('id', eventId).single()
+  if (ev) {
+    const newStart = opts.arrival_date && opts.arrival_date < ev.start_date ? opts.arrival_date : ev.start_date
+    const newEnd = opts.departure_date && opts.departure_date > ev.end_date ? opts.departure_date : ev.end_date
+    if (newStart !== ev.start_date || newEnd !== ev.end_date) {
+      await supabase.from('events')
+        .update({ start_date: newStart, end_date: newEnd, updated_at: new Date().toISOString() })
+        .eq('id', eventId)
+    }
+  }
+}
+
+/** Remove a single participant from an event. */
+export async function removeEventParticipant(eventId: string, personId: string) {
+  const { error } = await supabase
+    .from('event_participants')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('person_id', personId)
+  if (error) throw error
 }
 
 export async function deleteEvent(id: string) {
