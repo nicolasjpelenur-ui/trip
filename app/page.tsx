@@ -6,7 +6,7 @@ import { Person } from '@/lib/supabase'
 import { getPeople, createPerson } from '@/lib/queries'
 import { PersonAvatar } from '@/components/PersonChip'
 import { supabase } from '@/lib/supabase'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Lock } from 'lucide-react'
 
 const COLORS = [
   '#6366f1', '#ec4899', '#f97316', '#10b981',
@@ -49,7 +49,7 @@ export default function HomePage() {
   function enterAsGuest(person: Person) {
     localStorage.setItem('currentPersonId', person.id)
     localStorage.setItem('currentPersonName', person.name)
-    router.push('/calendar')
+    router.push('/dashboard')
   }
 
   async function handleSignIn() {
@@ -64,7 +64,7 @@ export default function HomePage() {
     }
     localStorage.setItem('currentPersonId', authPerson.id)
     localStorage.setItem('currentPersonName', authPerson.name)
-    router.push('/calendar')
+    router.push('/dashboard')
   }
 
   async function handleAddPerson() {
@@ -166,7 +166,9 @@ export default function HomePage() {
                     )}
                   </div>
                   {person.auth_user_id && (
-                    <span className="text-[10px] text-[#9c8b75] border border-[#ede8e0] rounded-full px-1.5 py-0.5 flex-shrink-0">🔒</span>
+                    <span className="text-[#9c8b75] border border-[#ede8e0] rounded-full p-1 flex-shrink-0" title="Password protected">
+                      <Lock className="w-3 h-3" />
+                    </span>
                   )}
                   <svg className="w-4 h-4 text-[#c9b99f] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createElement } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPeople, getLocations, createLocation, createEvent, updateEvent, deleteEvent, logActivity } from '@/lib/queries'
 import { Person, Location, EventWithDetails } from '@/lib/supabase'
@@ -148,7 +149,6 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
 
   const selectedLocation = locations.find((l) => l.id === locationId)
   const isValencia = selectedLocation?.name.toLowerCase() === 'valencia'
-  const SelectedLocIcon = selectedLocation ? getLocationIcon(selectedLocation.emoji) : null
 
   if (loading) return <div className="text-center text-[#9c8b75] py-8 text-sm">Loading…</div>
 
@@ -172,14 +172,16 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
         <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">Location</label>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            {SelectedLocIcon && (
-              <SelectedLocIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9c8b75] pointer-events-none" />
+            {selectedLocation && (
+              createElement(getLocationIcon(selectedLocation.emoji), {
+                className: 'absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9c8b75] pointer-events-none',
+              })
             )}
             <select
               value={locationId}
               onChange={(e) => setLocationId(e.target.value)}
               className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-white appearance-none text-[#1a1614]"
-              style={{ paddingLeft: SelectedLocIcon ? '2rem' : '0.875rem' }}
+              style={{ paddingLeft: selectedLocation ? '2rem' : '0.875rem' }}
             >
               {locations.map((l) => (
                 <option key={l.id} value={l.id}>{l.name}</option>

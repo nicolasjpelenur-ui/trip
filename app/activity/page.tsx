@@ -34,7 +34,7 @@ function ActivityContent() {
 
   useEffect(() => {
     if (!localStorage.getItem('currentPersonId')) { router.replace('/'); return }
-    load()
+    queueMicrotask(() => { void load() })
 
     const channel = supabase
       .channel('activity-feed')
@@ -64,7 +64,7 @@ function ActivityContent() {
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <h1 className="text-xl font-bold text-[#1a1614] mb-1">Activity</h1>
-      <p className="text-sm text-[#9c8b75] mb-5">What's been happening</p>
+      <p className="text-sm text-[#9c8b75] mb-5">What&apos;s been happening</p>
 
       {log.length === 0 ? (
         <div className="text-center py-16 flex flex-col items-center gap-3">

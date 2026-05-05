@@ -4,17 +4,20 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getGroups, getMessages } from '@/lib/chatQueries'
+import { getMessages } from '@/lib/chatQueries'
+import { openOnboarding } from '@/components/OnboardingHost'
 import {
-  CalendarDays, MessageSquare, GitBranch, Activity,
-  Users, ChevronLeft, ChevronRight, Plus, LogOut,
+  CalendarDays, MessageSquare, GitBranch, Activity, HelpCircle,
+  Users, UserRound, ChevronLeft, ChevronRight, Plus, LogOut, LayoutDashboard,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
+  { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/calendar', label: 'Calendar', Icon: CalendarDays },
   { href: '/chat', label: 'Chat', Icon: MessageSquare },
   { href: '/arc', label: 'Arc', Icon: GitBranch },
   { href: '/activity', label: 'Activity', Icon: Activity },
+  { href: '/profile', label: 'Profile', Icon: UserRound },
   { href: '/people', label: 'People', Icon: Users },
 ]
 
@@ -28,9 +31,11 @@ export function DesktopSidebar() {
 
   // Collapse setup — once only
   useEffect(() => {
-    const saved = localStorage.getItem('sidebarCollapsed') === 'true'
-    setCollapsed(saved)
-    document.documentElement.classList.toggle('sidebar-collapsed', saved)
+    queueMicrotask(() => {
+      const saved = localStorage.getItem('sidebarCollapsed') === 'true'
+      setCollapsed(saved)
+      document.documentElement.classList.toggle('sidebar-collapsed', saved)
+    })
 
     function handlePersonUpdated(e: Event) {
       const detail = (e as CustomEvent<{ name: string; color: string }>).detail
@@ -43,14 +48,16 @@ export function DesktopSidebar() {
 
   // Re-read user identity on every route change so switching profiles updates immediately
   useEffect(() => {
-    const id = localStorage.getItem('currentPersonId')
-    const name = localStorage.getItem('currentPersonName')
-    setUserName(name ?? '')
-    if (id) {
-      supabase.from('people').select('color').eq('id', id).single().then(({ data }) => {
-        if (data) setUserColor(data.color)
-      })
-    }
+    queueMicrotask(() => {
+      const id = localStorage.getItem('currentPersonId')
+      const name = localStorage.getItem('currentPersonName')
+      setUserName(name ?? '')
+      if (id) {
+        supabase.from('people').select('color').eq('id', id).single().then(({ data }) => {
+          if (data) setUserColor(data.color)
+        })
+      }
+    })
   }, [pathname])
 
   useEffect(() => {
@@ -157,6 +164,14 @@ export function DesktopSidebar() {
             )}
           </div>
         )}
+        <button
+          onClick={openOnboarding}
+          className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f3efe8] hover:text-[#1a1614] transition-colors ${collapsed ? 'justify-center' : ''}`}
+          title={collapsed ? 'Help' : undefined}
+        >
+          <HelpCircle className="w-3.5 h-3.5 flex-shrink-0" />
+          {!collapsed && <span>Help</span>}
+        </button>
         <button
           onClick={signOut}
           className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#fdf0ea] hover:text-[#e8724a] transition-colors ${collapsed ? 'justify-center' : ''}`}

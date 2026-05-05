@@ -7,6 +7,7 @@ export interface Person {
   status: string
   email: string | null
   auth_user_id: string | null
+  onboarding_completed_at: string | null
   created_at: string
 }
 
@@ -52,6 +53,37 @@ export interface EventWithDetails extends Event {
   participants: (EventParticipant & { person: Person })[]
   viewers: { person_id: string }[]
   visibility: string
+}
+
+export interface ItineraryDay {
+  id: string
+  event_id: string
+  day_date: string
+  title: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ItineraryItem {
+  id: string
+  day_id: string
+  title: string
+  start_time: string | null
+  end_time: string | null
+  place_name: string | null
+  address: string | null
+  city: string | null
+  url: string | null
+  notes: string | null
+  position: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ItineraryDayWithItems extends ItineraryDay {
+  items: ItineraryItem[]
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!

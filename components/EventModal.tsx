@@ -1,15 +1,15 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { EventWithDetails, Person } from '@/lib/supabase'
-import { PersonAvatar } from './PersonChip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { getLocationIcon } from '@/lib/locationIcons'
 import { deleteEvent, logActivity } from '@/lib/queries'
 import { getPeople } from '@/lib/queries'
 import { EventComments } from './EventComments'
 import { EventForm } from './EventForm'
+import { EventSummaryCard } from './EventSummaryCard'
 import { Pencil, Trash2, Plus, ArrowLeft } from 'lucide-react'
 
 interface EventModalProps {
@@ -34,11 +34,13 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
 
   // Reset form state when the user selects a new date — NOT on every background refresh
   useEffect(() => {
-    if (events.length === 1) setExpandedEvent(events[0].id)
-    else setExpandedEvent(null)
-    setCreating(false)
-    setEditingId(null)
-    setConfirmDelete(null)
+    queueMicrotask(() => {
+      if (events.length === 1) setExpandedEvent(events[0].id)
+      else setExpandedEvent(null)
+      setCreating(false)
+      setEditingId(null)
+      setConfirmDelete(null)
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date])
 
@@ -112,7 +114,6 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
                 </div>
               ) : (
                 events.map((event) => {
-                  const Icon = getLocationIcon(event.location.emoji)
                   const expanded = expandedEvent === event.id
                   return (
                     <div
@@ -122,34 +123,9 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
                     >
                       <button
                         onClick={() => setExpandedEvent(expanded ? null : event.id)}
-                        className="w-full text-left p-3.5 hover:bg-[#faf8f5] transition-colors"
+                        className="w-full text-left hover:bg-[#faf8f5] transition-colors"
                       >
-                        <div
-                          className="h-1 rounded-full mb-2.5"
-                          style={{
-                            background: event.participants.length > 1
-                              ? `linear-gradient(to right, ${event.participants.map(p => p.person.color).join(', ')})`
-                              : event.participants[0]?.person.color ?? '#ede8e0'
-                          }}
-                        />
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="font-semibold text-sm text-[#1a1614]">{event.title}</span>
-                          <span className="flex items-center gap-1 text-[11px] text-[#9c8b75] flex-shrink-0 bg-[#f3efe8] rounded-full px-2 py-0.5">
-                            <Icon className="w-3 h-3" />
-                            {event.location.name}
-                          </span>
-                        </div>
-                        <div className="text-xs text-[#9c8b75] mb-2.5">
-                          {format(parseISO(event.start_date), 'MMM d')} – {format(parseISO(event.end_date), 'MMM d')}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {event.participants.map((p) => (
-                            <PersonAvatar key={p.id} person={p.person} size="sm" />
-                          ))}
-                        </div>
-                        {event.notes && (
-                          <p className="text-xs text-[#9c8b75] mt-2 line-clamp-2">{event.notes}</p>
-                        )}
+                        <EventSummaryCard event={event} />
                       </button>
 
                       {expanded && (
@@ -163,7 +139,18 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
                           event.created_by === currentPerson.id ||
                           event.participants.some((p) => p.person_id === currentPerson.id)
                         )
-                        if (!canEdit) return null
+                        if (!canEdit) {
+                          return (
+                            <div className="flex border-t border-[#ede8e0]">
+                              <Link
+                                href={`/events/${event.id}`}
+                                className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
+                              >
+                                Open planner
+                              </Link>
+                            </div>
+                          )
+                        }
                         return confirmDelete === event.id ? (
                           <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-50 border-t border-red-100">
                             <span className="text-xs text-red-600 flex-1">Delete this event?</span>
@@ -175,9 +162,15 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
                           </div>
                         ) : (
                           <div className="flex border-t border-[#ede8e0]">
+                            <Link
+                              href={`/events/${event.id}`}
+                              className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
+                            >
+                              Planner
+                            </Link>
                             <button
                               onClick={() => setEditingId(event.id)}
-                              className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
+                              className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium border-l border-[#ede8e0]"
                             >
                               <Pencil className="w-3 h-3" /> Edit
                             </button>

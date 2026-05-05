@@ -57,8 +57,10 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [currentMonth, viewMonths])
 
   useEffect(() => {
-    setLoading(true)
-    refresh()
+    queueMicrotask(() => {
+      setLoading(true)
+      void refresh()
+    })
   }, [refresh])
 
   useEffect(() => {

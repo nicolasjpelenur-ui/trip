@@ -1,0 +1,406 @@
+'use client'
+
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  addDays,
+  differenceInCalendarDays,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  isToday,
+  isWithinInterval,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns'
+import {
+  BarChart2,
+  CalendarDays,
+  ChevronRight,
+  Clock,
+  LayoutDashboard,
+  Map,
+  MessageSquare,
+  Plus,
+} from 'lucide-react'
+import { NavBar } from '@/components/NavBar'
+import { RealtimeProvider } from '@/components/RealtimeProvider'
+import { EventSummaryCard } from '@/components/EventSummaryCard'
+import { PersonAvatar } from '@/components/PersonChip'
+import { GroupWithMembers, getGroupWithMembers, getGroups, getMessages } from '@/lib/chatQueries'
+import { getAllEvents, getPeople } from '@/lib/queries'
+import { EventWithDetails, Person } from '@/lib/supabase'
+import { getPollsForEvent, getPollsForGroup, Poll } from '@/lib/pollQueries'
+
+type ChatPreview = {
+  group: GroupWithMembers
+  lastMessage: string
+  lastMessageAt: string
+  unread: boolean
+}
+
+type PendingPoll = {
+  poll: Poll
+  sourceTitle: string
+  href: string
+}
+
+function canSeeEvent(event: EventWithDetails, personId: string) {
+  if ((event.visibility ?? 'all') === 'all') return true
+  return (
+    event.created_by === personId ||
+    event.participants.some((participant) => participant.person_id === personId) ||
+    (event.viewers ?? []).some((viewer) => viewer.person_id === personId)
+  )
+}
+
+function isCurrentPersonEvent(event: EventWithDetails, personId: string) {
+  return event.created_by === personId || event.participants.some((participant) => participant.person_id === personId)
+}
+
+function countdownLabel(event: EventWithDetails) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const start = parseISO(event.start_date)
+  const end = parseISO(event.end_date)
+  const startsIn = differenceInCalendarDays(start, today)
+  const endsIn = differenceInCalendarDays(end, today)
+
+  if (startsIn > 0) return `${startsIn} day${startsIn === 1 ? '' : 's'} away`
+  if (endsIn >= 0) return 'In progress'
+  return 'Finished'
+}
+
+function MiniCalendar({ events }: { events: EventWithDetails[] }) {
+  const month = startOfMonth(new Date())
+  const days: Date[] = []
+  let cursor = startOfWeek(month)
+  const finalDay = endOfWeek(endOfMonth(month))
+
+  while (cursor <= finalDay) {
+    days.push(cursor)
+    cursor = addDays(cursor, 1)
+  }
+
+  return (
+    <div className="bg-white border border-[#ede8e0] rounded-xl p-3" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="text-sm font-semibold text-[#1a1614]">This month</h2>
+          <p className="text-xs text-[#9c8b75]">{format(month, 'MMMM yyyy')}</p>
+        </div>
+        <Link href="/calendar" className="text-xs font-medium text-[#5b4cf5] hover:underline">Open calendar</Link>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((item, index) => (
+          <div key={`${item}-${index}`} className="text-[10px] font-semibold text-[#9c8b75] py-1">{item}</div>
+        ))}
+        {days.map((day) => {
+          const dayEvents = events.filter((event) =>
+            isWithinInterval(day, { start: parseISO(event.start_date), end: parseISO(event.end_date) })
+          )
+          return (
+            <Link
+              key={day.toISOString()}
+              href="/calendar"
+              className={`min-h-10 rounded-lg border text-xs flex flex-col items-center justify-center transition-colors ${
+                isToday(day)
+                  ? 'border-[#5b4cf5] bg-[#5b4cf5]/10 text-[#5b4cf5]'
+                  : isSameMonth(day, month)
+                    ? 'border-[#ede8e0] text-[#1a1614] hover:bg-[#f3efe8]'
+                    : 'border-transparent text-[#c9b99f]'
+              }`}
+            >
+              <span className="font-semibold">{format(day, 'd')}</span>
+              {dayEvents.length > 0 && (
+                <span className="mt-1 flex gap-0.5">
+                  {dayEvents.slice(0, 3).map((event) => (
+                    <span
+                      key={event.id}
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: event.participants[0]?.person.color ?? '#5b4cf5' }}
+                    />
+                  ))}
+                </span>
+              )}
+            </Link>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function DashboardContent() {
+  const router = useRouter()
+  const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
+  const [events, setEvents] = useState<EventWithDetails[]>([])
+  const [chatPreviews, setChatPreviews] = useState<ChatPreview[]>([])
+  const [pendingPolls, setPendingPolls] = useState<PendingPoll[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadDashboard() {
+      const personId = localStorage.getItem('currentPersonId')
+      if (!personId) {
+        router.replace('/')
+        return
+      }
+
+      const [people, allEvents, rawGroups] = await Promise.all([getPeople(), getAllEvents(), getGroups()])
+      if (cancelled) return
+
+      const person = people.find((item) => item.id === personId) ?? null
+      if (!person) {
+        localStorage.removeItem('currentPersonId')
+        localStorage.removeItem('currentPersonName')
+        router.replace('/')
+        return
+      }
+
+      const visibleEvents = allEvents
+        .filter((event) => canSeeEvent(event, personId))
+        .sort((a, b) => parseISO(a.start_date).getTime() - parseISO(b.start_date).getTime())
+
+      const myGroups = (await Promise.all(rawGroups.map((group) => getGroupWithMembers(group.id))))
+        .filter((group) => !group.is_private || group.members.some((member) => member.id === personId))
+        .filter((group) => group.members.some((member) => member.id === personId))
+
+      const seenKey = `lastSeenAt_${personId}`
+      const seen: Record<string, string> = JSON.parse(localStorage.getItem(seenKey) || '{}')
+      const previews = await Promise.all(myGroups.map(async (group) => {
+        const messages = await getMessages(group.id, 20)
+        const last = messages[messages.length - 1]
+        return {
+          group,
+          lastMessage: last?.content ?? 'No messages yet',
+          lastMessageAt: last?.created_at ?? group.created_at,
+          unread: Boolean(last && seen[group.id] && last.created_at > seen[group.id]),
+        }
+      }))
+
+      const eventPollEntries = await Promise.all(
+        visibleEvents.filter((event) => isCurrentPersonEvent(event, personId)).map(async (event) => ({
+          title: event.title,
+          href: '/calendar',
+          polls: await getPollsForEvent(event.id),
+        }))
+      )
+      const groupPollEntries = await Promise.all(
+        myGroups.map(async (group) => ({
+          title: group.is_dm
+            ? group.members.find((member) => member.id !== personId)?.name ?? 'Direct message'
+            : group.name,
+          href: `/chat/${group.id}`,
+          polls: await getPollsForGroup(group.id),
+        }))
+      )
+
+      const polls = [...eventPollEntries, ...groupPollEntries].flatMap((entry) =>
+        entry.polls
+          .filter((poll) => !poll.votes.some((vote) => vote.person_id === personId))
+          .map((poll) => ({ poll, sourceTitle: entry.title, href: entry.href }))
+      )
+
+      if (cancelled) return
+      setCurrentPerson(person)
+      setEvents(visibleEvents)
+      setChatPreviews(previews.sort((a, b) => Number(b.unread) - Number(a.unread) || b.lastMessageAt.localeCompare(a.lastMessageAt)))
+      setPendingPolls(polls.slice(0, 4))
+      setLoading(false)
+    }
+
+    queueMicrotask(() => { void loadDashboard() })
+
+    return () => { cancelled = true }
+  }, [router])
+
+  const today = useMemo(() => {
+    const value = new Date()
+    value.setHours(0, 0, 0, 0)
+    return value
+  }, [])
+
+  const futureEvents = events.filter((event) => parseISO(event.end_date) >= today)
+  const nextEvent = futureEvents[0]
+  const monthEvents = events.filter((event) => parseISO(event.start_date) <= endOfMonth(today) && parseISO(event.end_date) >= startOfMonth(today))
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+        <div className="skeleton h-10 w-52 rounded-xl" />
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="skeleton h-64 rounded-xl" />
+          <div className="skeleton h-64 rounded-xl" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentPerson) return null
+
+  return (
+    <main className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+      <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <PersonAvatar person={currentPerson} size="lg" />
+          <div>
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4 text-[#5b4cf5]" />
+              <h1 className="text-2xl font-bold text-[#1a1614]">Dashboard</h1>
+            </div>
+            <p className="text-sm text-[#9c8b75]">
+              {currentPerson.status || `Welcome back, ${currentPerson.name.split(' ')[0]}`}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/calendar" className="inline-flex items-center gap-1.5 rounded-xl bg-[#5b4cf5] text-white px-3 py-2 text-sm font-medium hover:bg-[#4a3dd4]">
+            <CalendarDays className="w-4 h-4" />
+            Calendar
+          </Link>
+          <Link href="/events/new" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8]">
+            <Plus className="w-4 h-4" />
+            New event
+          </Link>
+          <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8]">
+            <MessageSquare className="w-4 h-4" />
+            Chat
+          </Link>
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-4">
+          {nextEvent ? (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-semibold text-[#1a1614]">Next up</h2>
+                <span className="inline-flex items-center gap-1 text-xs text-[#9c8b75]">
+                  <Clock className="w-3.5 h-3.5" />
+                  {countdownLabel(nextEvent)}
+                </span>
+              </div>
+              <EventSummaryCard event={nextEvent} showCountdown href={`/events/${nextEvent.id}`} />
+            </div>
+          ) : (
+            <div className="bg-white border border-[#ede8e0] rounded-xl p-5 text-center" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+              <CalendarDays className="w-8 h-8 text-[#c9b99f] mx-auto mb-2" />
+              <h2 className="text-sm font-semibold text-[#1a1614]">No upcoming events</h2>
+              <p className="text-xs text-[#9c8b75] mt-1">Create the next trip or stay when plans are ready.</p>
+              <Link href="/events/new" className="inline-flex mt-3 text-xs font-medium text-[#5b4cf5] hover:underline">Create event</Link>
+            </div>
+          )}
+
+          <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-[#1a1614]">Upcoming this month</h2>
+              <Link href="/calendar" className="text-xs text-[#5b4cf5] font-medium hover:underline">View all</Link>
+            </div>
+            {monthEvents.length === 0 ? (
+              <p className="text-sm text-[#9c8b75] py-4">Nothing scheduled this month.</p>
+            ) : (
+              <div className="space-y-2">
+                {monthEvents.slice(0, 4).map((event) => (
+                  <EventSummaryCard key={event.id} event={event} compact href={`/events/${event.id}`} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <MiniCalendar events={monthEvents} />
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-[#1a1614]">Chats</h2>
+            <Link href="/chat" className="text-xs text-[#5b4cf5] font-medium hover:underline">Open chat</Link>
+          </div>
+          {chatPreviews.length === 0 ? (
+            <p className="text-sm text-[#9c8b75] py-4">No chat groups yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {chatPreviews.slice(0, 4).map((preview) => (
+                <Link key={preview.group.id} href={`/chat/${preview.group.id}`} className="flex items-center gap-3 rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] transition-colors">
+                  <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${preview.group.color}1f` }}>
+                    <MessageSquare className="w-4 h-4" style={{ color: preview.group.color }} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[#1a1614] truncate">{preview.group.is_dm ? preview.group.members.find((member) => member.id !== currentPerson.id)?.name ?? 'Direct message' : preview.group.name}</span>
+                      {preview.unread && <span className="w-2 h-2 rounded-full bg-[#e8724a] flex-shrink-0" />}
+                    </span>
+                    <span className="block text-xs text-[#9c8b75] truncate">{preview.lastMessage}</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-[#c9b99f]" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-[#1a1614]">Pending polls</h2>
+            <BarChart2 className="w-4 h-4 text-[#5b4cf5]" />
+          </div>
+          {pendingPolls.length === 0 ? (
+            <p className="text-sm text-[#9c8b75] py-4">No open polls need your vote.</p>
+          ) : (
+            <div className="space-y-2">
+              {pendingPolls.map(({ poll, sourceTitle, href }) => (
+                <Link key={poll.id} href={href} className="block rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] transition-colors">
+                  <p className="text-sm font-medium text-[#1a1614] line-clamp-2">{poll.question}</p>
+                  <p className="text-xs text-[#9c8b75] mt-1">{sourceTitle} · {poll.options.length} options</p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-8 h-8 rounded-lg bg-[#fdf0ea] flex items-center justify-center">
+              <Map className="w-4 h-4 text-[#e8724a]" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-[#1a1614]">Itinerary planner</h2>
+              <p className="text-xs text-[#9c8b75]">Coming soon</p>
+            </div>
+          </div>
+          <p className="text-sm text-[#9c8b75] leading-relaxed">
+            Plan what happens each day inside an event, including places, cities, and movement between stops.
+          </p>
+          {nextEvent ? (
+            <Link href={`/events/${nextEvent.id}`} className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#5b4cf5] text-white text-sm font-medium py-2 hover:bg-[#4a3dd4]">
+              Open next planner
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <button disabled className="mt-4 w-full rounded-xl bg-[#f3efe8] text-[#9c8b75] text-sm font-medium py-2 cursor-not-allowed">
+              Create an event first
+            </button>
+          )}
+        </div>
+      </section>
+    </main>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <RealtimeProvider>
+      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+        <NavBar />
+        <DashboardContent />
+      </div>
+    </RealtimeProvider>
+  )
+}

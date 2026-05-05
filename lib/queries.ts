@@ -154,6 +154,16 @@ export async function updatePersonStatus(id: string, status: string) {
   if (error) throw error
 }
 
+export async function completePersonOnboarding(id: string) {
+  const completedAt = new Date().toISOString()
+  const { error } = await supabase
+    .from('people')
+    .update({ onboarding_completed_at: completedAt })
+    .eq('id', id)
+  if (error) throw error
+  return completedAt
+}
+
 export async function deletePerson(id: string) {
   const { error } = await supabase.from('people').delete().eq('id', id)
   if (error) throw error

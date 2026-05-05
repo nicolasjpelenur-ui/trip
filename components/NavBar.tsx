@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getGroups, getMessages } from '@/lib/chatQueries'
+import { openOnboarding } from '@/components/OnboardingHost'
+import { HelpCircle } from 'lucide-react'
 
 export function NavBar() {
   const pathname = usePathname()
@@ -14,7 +16,9 @@ export function NavBar() {
   const [chatUnread, setChatUnread] = useState(false)
 
   useEffect(() => {
-    setUserName(localStorage.getItem('currentPersonName') ?? '')
+    queueMicrotask(() => {
+      setUserName(localStorage.getItem('currentPersonName') ?? '')
+    })
   }, [])
 
   useEffect(() => {
@@ -69,14 +73,23 @@ export function NavBar() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
         </div>
+        {navLink('/dashboard', 'Home')}
         {navLink('/calendar', 'Calendar')}
         {navLink('/chat', 'Chat', chatUnread)}
         {navLink('/arc', 'Arc')}
         {navLink('/activity', 'Activity')}
+        {navLink('/profile', 'Profile')}
         {navLink('/people', 'People')}
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          onClick={openOnboarding}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-[#9c8b75] hover:bg-[#f3efe8] hover:text-[#1a1614] transition-colors"
+          title="Help"
+        >
+          <HelpCircle className="w-4 h-4" />
+        </button>
         <Link href="/events/new"
           className="bg-[#5b4cf5] text-white text-sm font-medium px-3 py-1.5 rounded-xl hover:bg-[#4a3dd4] transition-colors whitespace-nowrap">
           + Event
