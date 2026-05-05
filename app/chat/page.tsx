@@ -88,9 +88,12 @@ function ChatContent() {
       const g = await findOrCreateDm(currentPersonId, otherId)
       router.push(`/chat/${g.id}`)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
+      const msg =
+        e instanceof Error ? e.message :
+        (e && typeof e === 'object' && 'message' in e) ? String((e as { message: unknown }).message) :
+        JSON.stringify(e)
       setDmError(`Could not open DM: ${msg}`)
-      console.error(e)
+      console.error('DM error:', e)
     } finally {
       setDmLoading(null)
     }
