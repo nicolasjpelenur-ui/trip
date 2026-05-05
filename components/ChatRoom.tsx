@@ -68,10 +68,12 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
       )
       .subscribe()
 
-    // Mark as seen
-    const seen = JSON.parse(localStorage.getItem('lastSeenAt') || '{}')
+    // Mark as seen (per-user key so switching profiles doesn't share state)
+    const pid = localStorage.getItem('currentPersonId') ?? 'guest'
+    const seenKey = `lastSeenAt_${pid}`
+    const seen = JSON.parse(localStorage.getItem(seenKey) || '{}')
     seen[groupId] = new Date().toISOString()
-    localStorage.setItem('lastSeenAt', JSON.stringify(seen))
+    localStorage.setItem(seenKey, JSON.stringify(seen))
 
     return () => { supabase.removeChannel(channel) }
   }, [groupId, scrollToBottom])
@@ -84,9 +86,11 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
     await sendMessage(groupId, currentPersonId, content)
     setSending(false)
 
-    const seen = JSON.parse(localStorage.getItem('lastSeenAt') || '{}')
-    seen[groupId] = new Date().toISOString()
-    localStorage.setItem('lastSeenAt', JSON.stringify(seen))
+    const pid2 = localStorage.getItem('currentPersonId') ?? 'guest'
+    const seenKey2 = `lastSeenAt_${pid2}`
+    const seen2 = JSON.parse(localStorage.getItem(seenKey2) || '{}')
+    seen2[groupId] = new Date().toISOString()
+    localStorage.setItem(seenKey2, JSON.stringify(seen2))
   }
 
   return (

@@ -26,11 +26,11 @@ export function DesktopSidebar() {
   const [userColor, setUserColor] = useState('#5b4cf5')
   const [chatUnread, setChatUnread] = useState(false)
 
+  // Collapse setup — once only
   useEffect(() => {
     const saved = localStorage.getItem('sidebarCollapsed') === 'true'
     setCollapsed(saved)
     document.documentElement.classList.toggle('sidebar-collapsed', saved)
-    setUserName(localStorage.getItem('currentPersonName') ?? '')
 
     function handlePersonUpdated(e: Event) {
       const detail = (e as CustomEvent<{ name: string; color: string }>).detail
@@ -41,24 +41,37 @@ export function DesktopSidebar() {
     return () => window.removeEventListener('personUpdated', handlePersonUpdated)
   }, [])
 
+  // Re-read user identity on every route change so switching profiles updates immediately
   useEffect(() => {
-    async function loadColor() {
-      const id = localStorage.getItem('currentPersonId')
-      if (!id) return
-      const { data } = await supabase.from('people').select('color').eq('id', id).single()
-      if (data) setUserColor(data.color)
+    const id = localStorage.getItem('currentPersonId')
+    const name = localStorage.getItem('currentPersonName')
+    setUserName(name ?? '')
+    if (id) {
+      supabase.from('people').select('color').eq('id', id).single().then(({ data }) => {
+        if (data) setUserColor(data.color)
+      })
     }
-    loadColor()
-  }, [])
+  }, [pathname])
 
   useEffect(() => {
     async function checkUnread() {
-      const seen: Record<string, string> = JSON.parse(localStorage.getItem('lastSeenAt') || '{}')
-      const groups = await getGroups()
-      for (const g of groups) {
-        const msgs = await getMessages(g.id, 1)
+      const personId = localStorage.getItem('currentPersonId')
+      if (!personId) { setChatUnread(false); return }
+
+      const seenKey = `lastSeenAt_${personId}`
+      const seen: Record<string, string> = JSON.parse(localStorage.getItem(seenKey) || '{}')
+
+      // Only check groups this person is a member of
+      const { data: memberships } = await supabase
+        .from('group_members').select('group_id').eq('person_id', personId)
+      const myGroupIds = (memberships ?? []).map((m) => m.group_id)
+      if (myGroupIds.length === 0) { setChatUnread(false); return }
+
+      for (const gid of myGroupIds) {
+        const msgs = await getMessages(gid, 1)
         const last = msgs[0]
-        if (last && (!seen[g.id] || last.created_at > seen[g.id])) {
+        // Only unread if we have a seenAt AND the last message is newer
+        if (last && seen[gid] && last.created_at > seen[gid]) {
           setChatUnread(true)
           return
         }

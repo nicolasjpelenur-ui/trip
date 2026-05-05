@@ -45,7 +45,8 @@ function ChatContent() {
         !currentPersonId || g.members.some((m) => m.id === currentPersonId)
       )
 
-      const seen: Record<string, string> = JSON.parse(localStorage.getItem('lastSeenAt') || '{}')
+      const seenKey = `lastSeenAt_${currentPersonId ?? 'guest'}`
+      const seen: Record<string, string> = JSON.parse(localStorage.getItem(seenKey) || '{}')
       const visibleRaw = raw.filter((g) => visible.some((v) => v.id === g.id))
       const msgs = await Promise.all(visibleRaw.map((g) => getMessages(g.id, 1)))
 
@@ -57,7 +58,7 @@ function ChatContent() {
         if (last) {
           lm[visibleRaw[i].id] = { content: last.content, created_at: last.created_at }
           const seenAt = seen[visibleRaw[i].id]
-          if (!seenAt || last.created_at > seenAt) ur[visibleRaw[i].id] = 1
+          if (seenAt && last.created_at > seenAt) ur[visibleRaw[i].id] = 1
         }
       }
       setLastMessages(lm)
