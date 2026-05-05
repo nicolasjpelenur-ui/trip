@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -77,6 +77,8 @@ export function OnboardingHost() {
   const [index, setIndex] = useState(0)
   const [person, setPerson] = useState<Person | null>(null)
   const [saving, setSaving] = useState(false)
+  // Prevent re-showing the auto-onboarding on every route change
+  const hasAutoShown = useRef(false)
 
   useEffect(() => {
     function handleOpen() {
@@ -97,7 +99,9 @@ export function OnboardingHost() {
       if (cancelled) return
       const currentPerson = people.find((item) => item.id === personId) ?? null
       setPerson(currentPerson)
-      if (currentPerson && !currentPerson.onboarding_completed_at && pathname !== '/') {
+      // Only auto-show once per session — not on every page navigation
+      if (currentPerson && !currentPerson.onboarding_completed_at && pathname !== '/' && !hasAutoShown.current) {
+        hasAutoShown.current = true
         setManual(false)
         setIndex(0)
         setOpen(true)

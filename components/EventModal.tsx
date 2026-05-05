@@ -21,7 +21,7 @@ interface EventModalProps {
   createRange?: { start: string; end: string } | null
 }
 
-/** Inline "join this event" form shown when the current user is not a participant */
+/** Two-step join panel: quick full-stay button, or expand for custom dates */
 function JoinEventPanel({
   event,
   currentPerson,
@@ -31,18 +31,19 @@ function JoinEventPanel({
   currentPerson: Person
   onDone: () => void
 }) {
+  const [customDates, setCustomDates] = useState(false)
   const [arrival, setArrival] = useState(event.start_date)
   const [departure, setDeparture] = useState(event.end_date)
   const [staying, setStaying] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  async function handleJoin() {
+  async function handleJoin(useCustom: boolean) {
     setSaving(true)
     try {
       await upsertEventParticipant(event.id, currentPerson.id, {
         staying_at_apartment: staying,
-        arrival_date: arrival !== event.start_date ? arrival : null,
-        departure_date: departure !== event.end_date ? departure : null,
+        arrival_date: useCustom && arrival !== event.start_date ? arrival : null,
+        departure_date: useCustom && departure !== event.end_date ? departure : null,
       })
       logActivity(currentPerson.id, 'joined_event', event.title, 'event', event.id)
       onDone()
@@ -51,54 +52,73 @@ function JoinEventPanel({
     }
   }
 
+  const rangeLabel = `${format(parseISO(event.start_date), 'MMM d')}–${format(parseISO(event.end_date), 'MMM d')}`
+
   return (
-    <div className="px-3.5 pb-3.5 pt-2 border-t border-[#ede8e0] bg-[#faf8f5] space-y-3">
+    <div className="px-3.5 pb-3.5 pt-2.5 border-t border-[#5b4cf5]/20 bg-[#5b4cf5]/5 space-y-2.5">
       <p className="text-xs font-semibold text-[#1a1614]">Join this event</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Your arrival</label>
-          <input
-            type="date"
-            value={arrival}
-            onChange={(e) => { setArrival(e.target.value); if (departure < e.target.value) setDeparture(e.target.value) }}
-            className="w-full border border-[#ede8e0] rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-white text-[#1a1614]"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Your departure</label>
-          <input
-            type="date"
-            value={departure}
-            min={arrival}
-            onChange={(e) => setDeparture(e.target.value)}
-            className="w-full border border-[#ede8e0] rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-white text-[#1a1614]"
-          />
-        </div>
-      </div>
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={staying}
-          onChange={(e) => setStaying(e.target.checked)}
-          className="rounded border-[#ede8e0]"
-        />
-        <span className="text-xs text-[#6b5d4f] flex items-center gap-1">
-          <Home className="w-3 h-3 text-[#e8724a]" /> Staying at the apartment
-        </span>
-      </label>
-      <div className="flex gap-2">
-        <button
-          onClick={handleJoin}
-          disabled={saving}
-          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#5b4cf5] py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors"
-        >
-          <UserPlus className="w-3.5 h-3.5" />
-          {saving ? 'Joining…' : 'Join event'}
-        </button>
-        <button onClick={onDone} className="text-xs text-[#9c8b75] px-3 py-2 rounded-xl hover:bg-[#f3efe8] transition-colors">
-          Cancel
-        </button>
-      </div>
+
+      {!customDates ? (
+        <>
+          {/* Quick join */}
+          <button
+            onClick={() => handleJoin(false)}
+            disabled={saving}
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#5b4cf5] py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            {saving ? 'Joining…' : `Join full stay (${rangeLabel})`}
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCustomDates(true)}
+              className="flex-1 text-xs font-medium text-[#5b4cf5] py-1.5 rounded-xl border border-[#5b4cf5]/30 hover:bg-white transition-colors"
+            >
+              I'm joining different dates
+            </button>
+            <button onClick={onDone} className="text-xs text-[#9c8b75] px-3 py-1.5 rounded-xl hover:bg-white transition-colors">
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Custom date pickers */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Your arrival</label>
+              <input type="date" value={arrival}
+                onChange={(e) => { setArrival(e.target.value); if (departure < e.target.value) setDeparture(e.target.value) }}
+                className="w-full border border-[#ede8e0] rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-white text-[#1a1614]"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Your departure</label>
+              <input type="date" value={departure} min={arrival}
+                onChange={(e) => setDeparture(e.target.value)}
+                className="w-full border border-[#ede8e0] rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-white text-[#1a1614]"
+              />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={staying} onChange={(e) => setStaying(e.target.checked)}
+              className="rounded border-[#ede8e0] accent-[#5b4cf5]" />
+            <span className="text-xs text-[#6b5d4f] flex items-center gap-1">
+              <Home className="w-3 h-3 text-[#e8724a]" /> Staying at the apartment
+            </span>
+          </label>
+          <div className="flex gap-2">
+            <button onClick={() => handleJoin(true)} disabled={saving}
+              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#5b4cf5] py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors">
+              <UserPlus className="w-3.5 h-3.5" />
+              {saving ? 'Joining…' : 'Confirm & join'}
+            </button>
+            <button onClick={() => setCustomDates(false)} className="text-xs text-[#9c8b75] px-3 py-2 rounded-xl hover:bg-white transition-colors">
+              Back
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -300,19 +320,20 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                         if (!canEdit) {
                           return (
                             <div className="flex border-t border-[#ede8e0]">
-                              <Link
-                                href={`/events/${event.id}`}
-                                className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
-                              >
-                                Open itinerary
-                              </Link>
-                              {currentPerson && (
+                              {currentPerson ? (
                                 <button
                                   onClick={() => setJoiningId(event.id)}
-                                  className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#2ba96a] py-2.5 hover:bg-[#f0fdf4] transition-colors font-medium border-l border-[#ede8e0]"
+                                  className="flex-1 flex items-center justify-center gap-1.5 text-xs text-white bg-[#5b4cf5] py-2.5 hover:bg-[#4a3dd4] transition-colors font-semibold"
                                 >
-                                  <UserPlus className="w-3 h-3" /> Join
+                                  <UserPlus className="w-3 h-3" /> Join event
                                 </button>
+                              ) : (
+                                <Link
+                                  href={`/events/${event.id}`}
+                                  className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
+                                >
+                                  Open itinerary
+                                </Link>
                               )}
                             </div>
                           )
