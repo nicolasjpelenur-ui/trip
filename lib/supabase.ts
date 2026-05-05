@@ -50,6 +50,8 @@ export interface EventParticipant {
 export interface EventWithDetails extends Event {
   location: Location
   participants: (EventParticipant & { person: Person })[]
+  viewers: { person_id: string }[]
+  visibility: string
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!

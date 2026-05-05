@@ -31,6 +31,14 @@ export function DesktopSidebar() {
     setCollapsed(saved)
     document.documentElement.classList.toggle('sidebar-collapsed', saved)
     setUserName(localStorage.getItem('currentPersonName') ?? '')
+
+    function handlePersonUpdated(e: Event) {
+      const detail = (e as CustomEvent<{ name: string; color: string }>).detail
+      setUserName(detail.name)
+      setUserColor(detail.color)
+    }
+    window.addEventListener('personUpdated', handlePersonUpdated)
+    return () => window.removeEventListener('personUpdated', handlePersonUpdated)
   }, [])
 
   useEffect(() => {
@@ -121,26 +129,29 @@ export function DesktopSidebar() {
         </Link>
       </nav>
 
-      {/* User + collapse */}
-      <div className="border-t border-[#ede8e0] p-2 space-y-1">
+      {/* User + sign-out + collapse */}
+      <div className="border-t border-[#ede8e0] p-2 space-y-0.5">
         {userName && (
-          <button
-            onClick={signOut}
-            className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 hover:bg-[#f3efe8] transition-colors ${collapsed ? 'justify-center' : ''}`}
-            title={collapsed ? `${userName} — sign out` : 'Sign out'}
-          >
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-              style={{ backgroundColor: userColor }}>
+          <div className={`flex items-center gap-2.5 px-2.5 py-2 ${collapsed ? 'justify-center' : ''}`}>
+            <span
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+              style={{ backgroundColor: userColor }}
+            >
               {userName.charAt(0).toUpperCase()}
             </span>
             {!collapsed && (
-              <>
-                <span className="text-xs text-[#9c8b75] flex-1 text-left truncate">{userName.split(' ')[0]}</span>
-                <LogOut className="w-3.5 h-3.5 text-[#c9b99f]" />
-              </>
+              <span className="text-xs font-medium text-[#1a1614] flex-1 truncate">{userName.split(' ')[0]}</span>
             )}
-          </button>
+          </div>
         )}
+        <button
+          onClick={signOut}
+          className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#fdf0ea] hover:text-[#e8724a] transition-colors ${collapsed ? 'justify-center' : ''}`}
+          title={collapsed ? 'Sign out' : undefined}
+        >
+          <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
+          {!collapsed && <span>Sign out</span>}
+        </button>
         <button
           onClick={toggleCollapse}
           className={`flex items-center gap-2 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f3efe8] transition-colors ${collapsed ? 'justify-center' : ''}`}

@@ -20,8 +20,8 @@ interface TripContextValue {
   setCurrentMonth: (d: Date) => void
   refresh: () => Promise<void>
   loading: boolean
-  extraMonth: boolean
-  setExtraMonth: (v: boolean) => void
+  viewMonths: number
+  setViewMonths: (n: number) => void
   onlinePersonIds: Set<string>
 }
 
@@ -35,7 +35,7 @@ export function useTripContext() {
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [extraMonth, setExtraMonth] = useState(false)
+  const [viewMonths, setViewMonths] = useState(1)
   const [people, setPeople] = useState<Person[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [events, setEvents] = useState<EventWithDetails[]>([])
@@ -44,8 +44,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd')
-    const endMonth = extraMonth ? addMonths(currentMonth, 1) : currentMonth
-    const end = format(endOfMonth(endMonth), 'yyyy-MM-dd')
+    const end = format(endOfMonth(addMonths(currentMonth, viewMonths - 1)), 'yyyy-MM-dd')
     const [p, l, e] = await Promise.all([
       getPeople(),
       getLocations(),
@@ -55,7 +54,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     setLocations(l)
     setEvents(e)
     setLoading(false)
-  }, [currentMonth, extraMonth])
+  }, [currentMonth, viewMonths])
 
   useEffect(() => {
     setLoading(true)
@@ -96,7 +95,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // Fetch color for current person
           const { data } = await supabase.from('people').select('color').eq('id', personId).single()
           await presenceChannel.track({
             personId,
@@ -111,7 +109,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <TripContext.Provider value={{ people, locations, events, currentMonth, setCurrentMonth, refresh, loading, extraMonth, setExtraMonth, onlinePersonIds }}>
+    <TripContext.Provider value={{ people, locations, events, currentMonth, setCurrentMonth, refresh, loading, viewMonths, setViewMonths, onlinePersonIds }}>
       {children}
     </TripContext.Provider>
   )

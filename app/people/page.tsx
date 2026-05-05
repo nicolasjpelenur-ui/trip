@@ -14,7 +14,10 @@ import { parseISO, differenceInCalendarDays, isWithinInterval, format } from 'da
 const COLORS = [
   '#6366f1', '#ec4899', '#f97316', '#10b981',
   '#3b82f6', '#a855f7', '#ef4444', '#14b8a6',
-  '#f59e0b', '#84cc16',
+  '#f59e0b', '#84cc16', '#06b6d4', '#d946ef',
+  '#f43f5e', '#22c55e', '#0ea5e9', '#e11d48',
+  '#7c3aed', '#db2777', '#ea580c', '#16a34a',
+  '#2563eb', '#9333ea', '#0891b2', '#65a30d',
 ]
 
 function getSharedDays(a: Person, b: Person, events: EventWithDetails[]) {
@@ -165,6 +168,10 @@ function PeopleContent() {
     setPeople((prev) =>
       prev.map((p) => p.id === id ? { ...p, name: editName, color: editColor, status: editStatus } : p)
     )
+    if (id === currentPersonId) {
+      localStorage.setItem('currentPersonName', editName)
+      window.dispatchEvent(new CustomEvent('personUpdated', { detail: { name: editName, color: editColor } }))
+    }
     setEditing(null)
     setPwEmail(''); setPwPassword(''); setPwError(''); setPwDone(false)
   }
@@ -208,7 +215,7 @@ function PeopleContent() {
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <h1 className="text-xl font-bold text-[#1a1614] mb-1">People</h1>
-      <p className="text-sm text-[#9c8b75] mb-5">Everyone joining the trip. Tap edit to update name, color, or status.</p>
+      <p className="text-sm text-[#9c8b75] mb-5">Everyone joining the trip.</p>
 
       <div className="bg-white rounded-2xl border border-[#ede8e0] overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
         {people.length === 0 && (
@@ -324,12 +331,14 @@ function PeopleContent() {
                     <div className="text-xs text-[#9c8b75] truncate mt-0.5">{person.status}</div>
                   )}
                 </div>
-                <button
-                  onClick={() => startEdit(person)}
-                  className="text-xs text-[#9c8b75] hover:text-[#5b4cf5] transition-colors px-2 py-1"
-                >
-                  Edit
-                </button>
+                {person.id === currentPersonId && (
+                  <button
+                    onClick={() => startEdit(person)}
+                    className="text-xs text-[#9c8b75] hover:text-[#5b4cf5] transition-colors px-2 py-1"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
             )}
           </div>

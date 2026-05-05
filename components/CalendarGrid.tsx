@@ -13,7 +13,9 @@ import { EventModal } from './EventModal'
 import { useTripContext } from './RealtimeProvider'
 import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
 import { updateEventDates } from '@/lib/queries'
-import { LayoutGrid, Columns2, Users, MapPin } from 'lucide-react'
+import { Users, MapPin, ChevronDown } from 'lucide-react'
+
+type ViewMode = '1' | '2' | '4'
 
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const EVENT_ROW_H = 20
@@ -313,22 +315,60 @@ function MonthGrid({
 }
 
 export function CalendarGrid() {
-  const { events, currentMonth, setCurrentMonth, loading, people, setExtraMonth, onlinePersonIds, refresh } = useTripContext()
+  const { events, currentMonth, setCurrentMonth, loading, people, setViewMonths, onlinePersonIds, refresh } = useTripContext()
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [activePeople, setActivePeople] = useState<Set<string> | null>(null)
-  const [viewMode, setViewMode] = useState<'1' | '2'>('1')
+  const [viewCount, setViewCount] = useState(1)
   const [colorMode, setColorMode] = useState<'person' | 'location'>('person')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
+  const [pickerRangeStart, setPickerRangeStart] = useState<{ year: number; month: number } | null>(null)
 
-  function toggleViewMode() {
-    const next = viewMode === '1' ? '2' : '1'
-    setViewMode(next)
-    setExtraMonth(next === '2')
+  const today = startOfMonth(new Date())
+  const isOnToday = currentMonth.getFullYear() === today.getFullYear() && currentMonth.getMonth() === today.getMonth()
+
+  function changeViewCount(n: number) {
+    setViewCount(n)
+    setViewMonths(n)
   }
 
-  const nextMonth = addMonths(currentMonth, 1)
+  function handlePickerMonth(year: number, month: number) {
+    if (!pickerRangeStart) {
+      setPickerRangeStart({ year, month })
+    } else {
+      const startTotal = pickerRangeStart.year * 12 + pickerRangeStart.month
+      const endTotal = year * 12 + month
+      if (endTotal < startTotal) {
+        setPickerRangeStart({ year, month })
+      } else {
+        const span = endTotal - startTotal + 1
+        setCurrentMonth(new Date(pickerRangeStart.year, pickerRangeStart.month, 1))
+        changeViewCount(span)
+        setPickerRangeStart(null)
+        setPickerOpen(false)
+      }
+    }
+  }
+
+  function isInPickerRange(year: number, month: number) {
+    if (!pickerRangeStart) return false
+    const t = year * 12 + month
+    const s = pickerRangeStart.year * 12 + pickerRangeStart.month
+    return t >= s && t <= s
+  }
+
+  const lastMonth = addMonths(currentMonth, viewCount - 1)
   const activeIds = activePeople ?? new Set(people.map((p) => p.id))
+  const currentPersonId = typeof window !== 'undefined' ? localStorage.getItem('currentPersonId') : null
 
   const filteredEvents = events
+    .filter((e) => {
+      const vis = e.visibility ?? 'all'
+      if (vis === 'all') return true
+      return (e.viewers ?? []).some((v) => v.person_id === currentPersonId) ||
+        e.participants.some((p) => p.person_id === currentPersonId) ||
+        e.created_by === currentPersonId
+    })
     .map((e) => ({ ...e, participants: e.participants.filter((p) => activeIds.has(p.person_id)) }))
     .filter((e) => e.participants.length > 0)
 
@@ -346,46 +386,118 @@ export function CalendarGrid() {
 
   function prev() { setCurrentMonth(addMonths(currentMonth, -1)) }
   function next() { setCurrentMonth(addMonths(currentMonth, 1)) }
+  function goToday() { setCurrentMonth(new Date()) }
+
+  function headerLabel() {
+    if (viewCount === 1) return format(currentMonth, 'MMMM yyyy')
+    return `${format(currentMonth, 'MMM yyyy')} – ${format(lastMonth, 'MMM yyyy')}`
+  }
+
+  const months = Array.from({ length: viewCount }, (_, i) => addMonths(currentMonth, i))
+  const isMulti = viewCount > 1
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
   return (
     <div className="flex flex-col h-full bg-[#faf8f5]">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-[#ede8e0] bg-white">
-        <button onClick={prev} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f3efe8] transition-colors text-[#9c8b75]">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <div className="flex items-center gap-2 flex-wrap justify-center">
-          <h2 className="text-sm font-semibold text-[#1a1614] tracking-tight">
-            {viewMode === '2'
-              ? `${format(currentMonth, 'MMM')} – ${format(nextMonth, 'MMM yyyy')}`
-              : format(currentMonth, 'MMMM yyyy')}
-          </h2>
-          <button
-            onClick={toggleViewMode}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              viewMode === '2' ? 'bg-[#5b4cf5] text-white' : 'bg-[#f3efe8] text-[#9c8b75] hover:bg-[#ede8e0]'
-            }`}
-            title="Toggle dual-month view"
-          >
-            {viewMode === '2' ? <Columns2 className="w-3.5 h-3.5" /> : <LayoutGrid className="w-3.5 h-3.5" />}
-            <span>{viewMode === '2' ? '2mo' : '1mo'}</span>
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#ede8e0] bg-white gap-2">
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={prev} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f3efe8] transition-colors text-[#9c8b75]">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          <button
-            onClick={() => setColorMode((m) => m === 'person' ? 'location' : 'person')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              colorMode === 'location' ? 'bg-[#e8724a] text-white' : 'bg-[#f3efe8] text-[#9c8b75] hover:bg-[#ede8e0]'
-            }`}
-            title="Toggle color by person / location"
-          >
-            {colorMode === 'location' ? <MapPin className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-            <span>{colorMode === 'location' ? 'place' : 'person'}</span>
-          </button>
+          {!isOnToday && (
+            <button onClick={goToday} className="text-[11px] font-medium text-[#5b4cf5] px-2 py-1 rounded-full hover:bg-[#5b4cf5]/10 transition-colors whitespace-nowrap">
+              Today
+            </button>
+          )}
         </div>
 
-        <button onClick={next} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f3efe8] transition-colors text-[#9c8b75]">
+        <div className="flex flex-col items-center gap-1.5 min-w-0 relative">
+          <button
+            onClick={() => {
+              setPickerOpen((v) => !v)
+              setPickerYear(currentMonth.getFullYear())
+              setPickerRangeStart(null)
+            }}
+            className="flex items-center gap-1 text-sm font-semibold text-[#1a1614] tracking-tight hover:text-[#5b4cf5] transition-colors"
+          >
+            {headerLabel()}
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${pickerOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Month range picker */}
+          {pickerOpen && (
+            <div className="absolute top-full mt-1 z-50 bg-white border border-[#ede8e0] rounded-2xl p-3 w-60" style={{ boxShadow: '0 4px 20px rgba(100,60,10,0.12)' }}>
+              <div className="flex items-center justify-between mb-1">
+                <button onClick={() => setPickerYear((y) => y - 1)} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f3efe8] text-[#9c8b75]">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <span className="text-xs font-semibold text-[#1a1614]">{pickerYear}</span>
+                <button onClick={() => setPickerYear((y) => y + 1)} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f3efe8] text-[#9c8b75]">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+              {pickerRangeStart && (
+                <p className="text-[10px] text-[#9c8b75] text-center mb-1.5">
+                  From {MONTH_NAMES[pickerRangeStart.month]} {pickerRangeStart.year} — click end month
+                </p>
+              )}
+              <div className="grid grid-cols-3 gap-1">
+                {MONTH_NAMES.map((name, i) => {
+                  const isStart = pickerRangeStart?.year === pickerYear && pickerRangeStart?.month === i
+                  const isCurrent = !pickerRangeStart && pickerYear === currentMonth.getFullYear() && i === currentMonth.getMonth()
+                  const inRange = pickerRangeStart
+                    ? (pickerYear * 12 + i) >= (pickerRangeStart.year * 12 + pickerRangeStart.month)
+                    : false
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handlePickerMonth(pickerYear, i)}
+                      className={`py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        isStart ? 'bg-[#5b4cf5] text-white ring-2 ring-[#5b4cf5]/30' :
+                        isCurrent ? 'bg-[#5b4cf5] text-white' :
+                        inRange ? 'bg-[#5b4cf5]/10 text-[#5b4cf5]' :
+                        'text-[#9c8b75] hover:bg-[#f3efe8] hover:text-[#1a1614]'
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  )
+                })}
+              </div>
+              {pickerRangeStart && (
+                <button onClick={() => setPickerRangeStart(null)} className="mt-2 w-full text-[10px] text-[#9c8b75] hover:text-[#1a1614] transition-colors">
+                  Cancel range
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center bg-[#f3efe8] rounded-full p-0.5 gap-0.5">
+              {[1, 2, 4].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => changeViewCount(v)}
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${viewCount === v ? 'bg-white text-[#1a1614] shadow-sm' : 'text-[#9c8b75] hover:text-[#1a1614]'}`}
+                >
+                  {v}mo
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setColorMode((m) => m === 'person' ? 'location' : 'person')}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${colorMode === 'location' ? 'bg-[#e8724a] text-white' : 'text-[#9c8b75] hover:bg-[#f3efe8]'}`}
+            >
+              {colorMode === 'location' ? <MapPin className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+              {colorMode === 'location' ? 'place' : 'person'}
+            </button>
+          </div>
+        </div>
+
+        <button onClick={next} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f3efe8] transition-colors text-[#9c8b75] flex-shrink-0">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
@@ -424,14 +536,21 @@ export function CalendarGrid() {
       )}
 
       {/* Calendar body */}
-      <div className={`flex-1 overflow-y-auto ${viewMode === '2' ? 'grid grid-cols-2 sm:grid-cols-2 divide-x divide-[#ede8e0]' : 'flex flex-col'}`}>
-        <MonthGrid month={currentMonth} events={filteredEvents} onDayClick={setSelectedDay} compact={viewMode === '2'} colorMode={colorMode} onRefresh={refresh} />
-        {viewMode === '2' && (
-          <MonthGrid month={nextMonth} events={filteredEvents} onDayClick={setSelectedDay} compact colorMode={colorMode} onRefresh={refresh} />
-        )}
-      </div>
+      {isMulti ? (
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-2 divide-x divide-[#ede8e0]">
+            {months.map((m) => (
+              <MonthGrid key={m.toISOString()} month={m} events={filteredEvents} onDayClick={setSelectedDay} compact colorMode={colorMode} onRefresh={refresh} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto flex flex-col">
+          <MonthGrid month={currentMonth} events={filteredEvents} onDayClick={setSelectedDay} compact={false} colorMode={colorMode} onRefresh={refresh} />
+        </div>
+      )}
 
-      <EventModal date={selectedDay} events={selectedEvents} onClose={() => setSelectedDay(null)} />
+      <EventModal date={selectedDay} events={selectedEvents} onClose={() => setSelectedDay(null)} onRefresh={refresh} />
     </div>
   )
 }

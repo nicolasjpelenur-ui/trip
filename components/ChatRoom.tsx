@@ -5,7 +5,9 @@ import { isSameDay, isToday, format, parseISO } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { Message, getMessages, sendMessage } from '@/lib/chatQueries'
 import { MessageBubble } from './MessageBubble'
-import { MessageSquare, Send } from 'lucide-react'
+import { MessageSquare, Send, BarChart2 } from 'lucide-react'
+import { PollCard, PollCreator } from './PollCard'
+import { Poll, getPollsForGroup } from '@/lib/pollQueries'
 
 function DateSeparator({ date }: { date: Date }) {
   const label = isToday(date) ? 'Today' : format(date, 'EEE, MMM d')
@@ -25,15 +27,23 @@ interface ChatRoomProps {
 
 export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([])
+  const [polls, setPolls] = useState<Poll[]>([])
+  const [showPollCreator, setShowPollCreator] = useState(false)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  function loadPolls() {
+    getPollsForGroup(groupId).then(setPolls).catch(() => {})
+
+  }
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     bottomRef.current?.scrollIntoView({ behavior })
   }, [])
 
   useEffect(() => {
+    loadPolls()
     getMessages(groupId).then((msgs) => {
       setMessages(msgs)
       setTimeout(() => scrollToBottom('instant'), 50)
@@ -81,6 +91,23 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Polls */}
+      {(polls.length > 0 || showPollCreator) && (
+        <div className="px-4 pt-3 space-y-2 border-b border-[#ede8e0]">
+          {polls.map((poll) => (
+            <PollCard key={poll.id} poll={poll} currentPersonId={currentPersonId} onRefresh={loadPolls} />
+          ))}
+          {showPollCreator && (
+            <PollCreator
+              currentPersonId={currentPersonId}
+              groupId={groupId}
+              onCreated={() => { loadPolls(); setShowPollCreator(false) }}
+            />
+          )}
+          <div className="pb-2" />
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && (
@@ -116,6 +143,13 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
       {/* Input */}
       <div className="border-t border-[#ede8e0] px-4 py-3 bg-white">
         <div className="flex items-end gap-2">
+          <button
+            onClick={() => setShowPollCreator((v) => !v)}
+            title="Add poll"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border transition-colors ${showPollCreator ? 'bg-[#5b4cf5] border-[#5b4cf5] text-white' : 'border-[#ede8e0] text-[#9c8b75] hover:border-[#5b4cf5] hover:text-[#5b4cf5]'}`}
+          >
+            <BarChart2 className="w-4 h-4" />
+          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}

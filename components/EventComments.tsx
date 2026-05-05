@@ -11,6 +11,8 @@ import {
 import { PersonAvatar } from './PersonChip'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { ThumbsUp, Heart, HelpCircle, Clock, PartyPopper, Send } from 'lucide-react'
+import { PollCard, PollCreator } from './PollCard'
+import { Poll, getPollsForEvent } from '@/lib/pollQueries'
 
 const REACTIONS = [
   { key: 'thumbs-up', Icon: ThumbsUp },
@@ -28,14 +30,20 @@ interface EventCommentsProps {
 export function EventComments({ eventId, currentPerson }: EventCommentsProps) {
   const [comments, setComments] = useState<EventComment[]>([])
   const [reactions, setReactions] = useState<EventReaction[]>([])
+  const [polls, setPolls] = useState<Poll[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+
+  function loadPolls() {
+    getPollsForEvent(eventId).then(setPolls).catch(() => {})
+  }
 
   useEffect(() => {
     Promise.all([getEventComments(eventId), getEventReactions(eventId)]).then(([c, r]) => {
       setComments(c)
       setReactions(r)
     })
+    loadPolls()
 
     const channel = supabase
       .channel(`event-${eventId}`)
@@ -72,7 +80,16 @@ export function EventComments({ eventId, currentPerson }: EventCommentsProps) {
   }))
 
   return (
-    <div className="mt-3 pt-3 border-t border-[#ede8e0]">
+    <div className="mt-3 pt-3 border-t border-[#ede8e0] space-y-3">
+      {/* Polls */}
+      {polls.map((poll) => (
+        <PollCard key={poll.id} poll={poll} currentPersonId={currentPerson?.id ?? null} onRefresh={loadPolls} />
+      ))}
+      <PollCreator
+        currentPersonId={currentPerson?.id ?? null}
+        eventId={eventId}
+        onCreated={loadPolls}
+      />
       {/* Reactions */}
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
         {reactionCounts.map(({ key, count, mine }) => {

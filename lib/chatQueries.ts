@@ -6,6 +6,7 @@ export interface Group {
   color: string
   description: string | null
   is_private: boolean
+  is_dm: boolean
   created_by: string | null
   created_at: string
 }
@@ -106,6 +107,56 @@ export async function sendMessage(groupId: string, personId: string, content: st
     .from('messages')
     .insert({ group_id: groupId, person_id: personId, content })
   if (error) throw error
+}
+
+export async function deleteGroup(id: string) {
+  const { error } = await supabase.from('groups').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function findOrCreateDm(myId: string, otherId: string): Promise<Group> {
+  // Find existing DM group shared by these two people
+  const { data: myMemberships } = await supabase
+    .from('group_members')
+    .select('group_id')
+    .eq('person_id', myId)
+
+  if (myMemberships && myMemberships.length > 0) {
+    const groupIds = myMemberships.map((m) => m.group_id)
+    const { data: dmGroups } = await supabase
+      .from('groups')
+      .select('id')
+      .in('id', groupIds)
+      .eq('is_dm', true)
+
+    if (dmGroups) {
+      for (const g of dmGroups) {
+        const { data: members } = await supabase
+          .from('group_members')
+          .select('person_id')
+          .eq('group_id', g.id)
+        if (members && members.length === 2 && members.some((m) => m.person_id === otherId)) {
+          const { data: group } = await supabase.from('groups').select('*').eq('id', g.id).single()
+          if (group) return group as Group
+        }
+      }
+    }
+  }
+
+  // Create new DM group
+  const { data, error } = await supabase
+    .from('groups')
+    .insert({ name: 'dm', color: '#9c8b75', is_dm: true, is_private: true })
+    .select()
+    .single()
+  if (error) throw error
+
+  await supabase.from('group_members').insert([
+    { group_id: data.id, person_id: myId },
+    { group_id: data.id, person_id: otherId },
+  ])
+
+  return data as Group
 }
 
 export async function getEventComments(eventId: string): Promise<EventComment[]> {

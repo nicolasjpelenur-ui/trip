@@ -11,7 +11,10 @@ import { Eye, EyeOff } from 'lucide-react'
 const COLORS = [
   '#6366f1', '#ec4899', '#f97316', '#10b981',
   '#3b82f6', '#a855f7', '#ef4444', '#14b8a6',
-  '#f59e0b', '#84cc16',
+  '#f59e0b', '#84cc16', '#06b6d4', '#d946ef',
+  '#f43f5e', '#22c55e', '#0ea5e9', '#e11d48',
+  '#7c3aed', '#db2777', '#ea580c', '#16a34a',
+  '#2563eb', '#9333ea', '#0891b2', '#65a30d',
 ]
 
 export default function HomePage() {

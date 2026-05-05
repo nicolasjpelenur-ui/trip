@@ -46,38 +46,30 @@ export async function getEventsInRange(startDate: string, endDate: string): Prom
     .select(`
       *,
       location:locations(*),
-      participants:event_participants(
-        *,
-        person:people(*)
-      )
+      participants:event_participants(*, person:people(*)),
+      viewers:event_viewers(person_id)
     `)
     .or(`start_date.lte.${endDate},end_date.gte.${startDate}`)
     .order('start_date')
   if (error) throw error
-  return data as EventWithDetails[]
+  return (data ?? []).map((e) => ({ ...e, viewers: e.viewers ?? [], visibility: e.visibility ?? 'all' })) as EventWithDetails[]
 }
 
 export async function getEvent(id: string): Promise<EventWithDetails> {
   const { data, error } = await supabase
     .from('events')
-    .select(`
-      *,
-      location:locations(*),
-      participants:event_participants(
-        *,
-        person:people(*)
-      )
-    `)
+    .select(`*, location:locations(*), participants:event_participants(*, person:people(*)), viewers:event_viewers(person_id)`)
     .eq('id', id)
     .single()
   if (error) throw error
-  return data as EventWithDetails
+  return { ...data, viewers: data.viewers ?? [], visibility: data.visibility ?? 'all' } as EventWithDetails
 }
 
 export async function createEvent(
-  event: { title: string; location_id: string; start_date: string; end_date: string; notes?: string; created_by?: string },
+  event: { title: string; location_id: string; start_date: string; end_date: string; notes?: string; created_by?: string; visibility?: string },
   participantIds: string[],
-  stayingAtApartmentIds: string[]
+  stayingAtApartmentIds: string[],
+  viewerIds: string[] = []
 ) {
   const { data, error } = await supabase
     .from('events')
@@ -97,14 +89,19 @@ export async function createEvent(
     if (epError) throw epError
   }
 
+  if (viewerIds.length > 0) {
+    await supabase.from('event_viewers').insert(viewerIds.map((person_id) => ({ event_id: data.id, person_id })))
+  }
+
   return data
 }
 
 export async function updateEvent(
   id: string,
-  event: { title: string; location_id: string; start_date: string; end_date: string; notes?: string },
+  event: { title: string; location_id: string; start_date: string; end_date: string; notes?: string; visibility?: string },
   participantIds: string[],
-  stayingAtApartmentIds: string[]
+  stayingAtApartmentIds: string[],
+  viewerIds: string[] = []
 ) {
   const { error } = await supabase
     .from('events')
@@ -112,18 +109,20 @@ export async function updateEvent(
     .eq('id', id)
   if (error) throw error
 
-  const { error: delError } = await supabase.from('event_participants').delete().eq('event_id', id)
-  if (delError) throw delError
-
+  await supabase.from('event_participants').delete().eq('event_id', id)
   if (participantIds.length > 0) {
-    const { error: epError } = await supabase.from('event_participants').insert(
+    await supabase.from('event_participants').insert(
       participantIds.map((person_id) => ({
         event_id: id,
         person_id,
         staying_at_apartment: stayingAtApartmentIds.includes(person_id),
       }))
     )
-    if (epError) throw epError
+  }
+
+  await supabase.from('event_viewers').delete().eq('event_id', id)
+  if (viewerIds.length > 0) {
+    await supabase.from('event_viewers').insert(viewerIds.map((person_id) => ({ event_id: id, person_id })))
   }
 }
 
@@ -143,10 +142,10 @@ export async function updateEventDates(id: string, startDate: string, endDate: s
 export async function getAllEvents(): Promise<EventWithDetails[]> {
   const { data, error } = await supabase
     .from('events')
-    .select(`*, location:locations(*), participants:event_participants(*, person:people(*))`)
+    .select(`*, location:locations(*), participants:event_participants(*, person:people(*)), viewers:event_viewers(person_id)`)
     .order('start_date')
   if (error) throw error
-  return data as EventWithDetails[]
+  return (data ?? []).map((e) => ({ ...e, viewers: e.viewers ?? [], visibility: e.visibility ?? 'all' })) as EventWithDetails[]
 }
 
 export async function updatePersonStatus(id: string, status: string) {
@@ -170,10 +169,13 @@ export async function logActivity(
   })
 }
 
+const CHAT_ACTIONS = ['sent_message', 'added_reaction', 'sent_dm']
+
 export async function getActivityLog(limit = 50): Promise<ActivityLog[]> {
   const { data, error } = await supabase
     .from('activity_log')
     .select('*, person:people(*)')
+    .not('action', 'in', `(${CHAT_ACTIONS.map((a) => `"${a}"`).join(',')})`)
     .order('created_at', { ascending: false })
     .limit(limit)
   if (error) throw error
