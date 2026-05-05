@@ -32,12 +32,15 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
     if (id) getPeople().then((people) => setCurrentPerson(people.find((p) => p.id === id) ?? null))
   }, [])
 
+  // Reset form state when the user selects a new date — NOT on every background refresh
   useEffect(() => {
     if (events.length === 1) setExpandedEvent(events[0].id)
     else setExpandedEvent(null)
     setCreating(false)
     setEditingId(null)
-  }, [events])
+    setConfirmDelete(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date])
 
   if (!date) return null
 

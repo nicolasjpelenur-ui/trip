@@ -88,7 +88,8 @@ function ChatContent() {
       const g = await findOrCreateDm(currentPersonId, otherId)
       router.push(`/chat/${g.id}`)
     } catch (e) {
-      setDmError('Could not open DM — make sure migration 005 has been run in Supabase.')
+      const msg = e instanceof Error ? e.message : String(e)
+      setDmError(`Could not open DM: ${msg}`)
       console.error(e)
     } finally {
       setDmLoading(null)

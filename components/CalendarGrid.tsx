@@ -15,8 +15,6 @@ import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
 import { updateEventDates } from '@/lib/queries'
 import { Users, MapPin, ChevronDown } from 'lucide-react'
 
-type ViewMode = '1' | '2' | '4'
-
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const EVENT_ROW_H = 20
 const MAX_ROWS = 3
@@ -350,27 +348,26 @@ export function CalendarGrid() {
     }
   }
 
-  function isInPickerRange(year: number, month: number) {
-    if (!pickerRangeStart) return false
-    const t = year * 12 + month
-    const s = pickerRangeStart.year * 12 + pickerRangeStart.month
-    return t >= s && t <= s
-  }
-
   const lastMonth = addMonths(currentMonth, viewCount - 1)
   const activeIds = activePeople ?? new Set(people.map((p) => p.id))
   const currentPersonId = typeof window !== 'undefined' ? localStorage.getItem('currentPersonId') : null
 
   const filteredEvents = events
     .filter((e) => {
+      // Visibility: restricted events only show to allowed people
       const vis = e.visibility ?? 'all'
-      if (vis === 'all') return true
-      return (e.viewers ?? []).some((v) => v.person_id === currentPersonId) ||
-        e.participants.some((p) => p.person_id === currentPersonId) ||
-        e.created_by === currentPersonId
+      if (vis !== 'all') {
+        const canSee =
+          (e.viewers ?? []).some((v) => v.person_id === currentPersonId) ||
+          e.participants.some((p) => p.person_id === currentPersonId) ||
+          e.created_by === currentPersonId
+        if (!canSee) return false
+      }
+      // Person filter: hide only if the event *has* participants but none are active
+      if (e.participants.length > 0 && !e.participants.some((p) => activeIds.has(p.person_id))) return false
+      return true
     })
     .map((e) => ({ ...e, participants: e.participants.filter((p) => activeIds.has(p.person_id)) }))
-    .filter((e) => e.participants.length > 0)
 
   const selectedEvents = selectedDay ? getEventsForDay(filteredEvents, selectedDay) : []
 

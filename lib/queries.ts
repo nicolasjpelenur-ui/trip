@@ -49,7 +49,8 @@ export async function getEventsInRange(startDate: string, endDate: string): Prom
       participants:event_participants(*, person:people(*)),
       viewers:event_viewers(person_id)
     `)
-    .or(`start_date.lte.${endDate},end_date.gte.${startDate}`)
+    .lte('start_date', endDate)
+    .gte('end_date', startDate)
     .order('start_date')
   if (error) throw error
   return (data ?? []).map((e) => ({ ...e, viewers: e.viewers ?? [], visibility: e.visibility ?? 'all' })) as EventWithDetails[]
@@ -175,7 +176,7 @@ export async function getActivityLog(limit = 50): Promise<ActivityLog[]> {
   const { data, error } = await supabase
     .from('activity_log')
     .select('*, person:people(*)')
-    .not('action', 'in', `(${CHAT_ACTIONS.map((a) => `"${a}"`).join(',')})`)
+    .not('action', 'in', `(${CHAT_ACTIONS.join(',')})`)
     .order('created_at', { ascending: false })
     .limit(limit)
   if (error) throw error

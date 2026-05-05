@@ -146,7 +146,7 @@ export async function findOrCreateDm(myId: string, otherId: string): Promise<Gro
   // Create new DM group
   const { data, error } = await supabase
     .from('groups')
-    .insert({ name: 'dm', color: '#9c8b75', is_dm: true, is_private: true })
+    .insert({ name: 'dm', color: '#9c8b75', is_dm: true, is_private: true, created_by: myId })
     .select()
     .single()
   if (error) throw error
