@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { NavBar } from '@/components/NavBar'
 import { RealtimeProvider } from '@/components/RealtimeProvider'
 import { PersonAvatar } from '@/components/PersonChip'
 import { Person } from '@/lib/supabase'
-import { getPeople, updatePerson, updatePersonStatus, getAllEvents } from '@/lib/queries'
+import { getPeople, updatePerson, updatePersonStatus, deletePerson, getAllEvents } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react'
 import { EventWithDetails } from '@/lib/supabase'
@@ -130,6 +131,7 @@ function OverlapCalculator({ people, events }: { people: Person[]; events: Event
 }
 
 function PeopleContent() {
+  const router = useRouter()
   const [people, setPeople] = useState<Person[]>([])
   const [events, setEvents] = useState<EventWithDetails[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,6 +139,8 @@ function PeopleContent() {
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
   const [editStatus, setEditStatus] = useState('')
+  const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const [showOverlap, setShowOverlap] = useState(false)
   // Password setup
   const [pwEmail, setPwEmail] = useState('')
@@ -174,6 +178,18 @@ function PeopleContent() {
     }
     setEditing(null)
     setPwEmail(''); setPwPassword(''); setPwError(''); setPwDone(false)
+  }
+
+  async function handleDeleteAccount(personId: string) {
+    setDeletingAccount(true)
+    try {
+      await deletePerson(personId)
+      localStorage.removeItem('currentPersonId')
+      localStorage.removeItem('currentPersonName')
+      router.replace('/')
+    } finally {
+      setDeletingAccount(false)
+    }
   }
 
   async function handleSetPassword(personId: string) {
@@ -315,12 +331,36 @@ function PeopleContent() {
                     Save
                   </button>
                   <button
-                    onClick={() => setEditing(null)}
+                    onClick={() => { setEditing(null); setConfirmDeleteAccount(false) }}
                     className="text-[#9c8b75] text-xs border border-[#ede8e0] px-4 py-2 rounded-xl hover:bg-[#f3efe8] transition-colors bg-white"
                   >
                     Cancel
                   </button>
                 </div>
+                {person.id === currentPersonId && (
+                  <div className="border-t border-[#ede8e0] pt-3">
+                    {confirmDeleteAccount ? (
+                      <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl">
+                        <span className="text-xs text-red-600 flex-1">Delete your account? This cannot be undone.</span>
+                        <button
+                          onClick={() => handleDeleteAccount(person.id)}
+                          disabled={deletingAccount}
+                          className="text-xs font-medium text-white bg-red-500 px-2.5 py-1 rounded-full disabled:opacity-40"
+                        >
+                          {deletingAccount ? '…' : 'Yes, delete'}
+                        </button>
+                        <button onClick={() => setConfirmDeleteAccount(false)} className="text-xs text-[#9c8b75] px-2 py-1">Cancel</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteAccount(true)}
+                        className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                      >
+                        Delete account
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-3 px-4 py-3.5">

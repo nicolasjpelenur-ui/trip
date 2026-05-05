@@ -202,17 +202,17 @@ function ChatContent() {
                   ))}
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-[#1a1614] flex items-center gap-1"><Lock className="w-3 h-3" /> Private group</p>
                   <p className="text-[11px] text-[#9c8b75]">Only members can read it</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setNewPrivate((v) => !v)}
-                  className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 relative ${newPrivate ? 'bg-[#5b4cf5]' : 'bg-[#ede8e0]'}`}
+                  className={`w-11 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-0.5 ${newPrivate ? 'bg-[#5b4cf5]' : 'bg-[#ede8e0]'}`}
                 >
-                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${newPrivate ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  <span className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${newPrivate ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
               <div>

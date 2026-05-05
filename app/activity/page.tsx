@@ -26,7 +26,8 @@ function ActivityContent() {
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
-    const data = await getActivityLog(60)
+    const personId = typeof window !== 'undefined' ? localStorage.getItem('currentPersonId') : null
+    const data = await getActivityLog(personId)
     setLog(data)
     setLoading(false)
   }, [])

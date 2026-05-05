@@ -158,31 +158,38 @@ export function EventModal({ date, events, onClose, onRefresh }: EventModalProps
                         </div>
                       )}
 
-                      {confirmDelete === event.id ? (
-                        <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-50 border-t border-red-100">
-                          <span className="text-xs text-red-600 flex-1">Delete this event?</span>
-                          <button onClick={() => handleDelete(event.id)} disabled={deleting}
-                            className="text-xs font-medium text-white bg-red-500 px-2.5 py-1 rounded-full">
-                            {deleting ? '…' : 'Yes'}
-                          </button>
-                          <button onClick={() => setConfirmDelete(null)} className="text-xs text-[#9c8b75] px-2 py-1">Cancel</button>
-                        </div>
-                      ) : (
-                        <div className="flex border-t border-[#ede8e0]">
-                          <button
-                            onClick={() => setEditingId(event.id)}
-                            className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
-                          >
-                            <Pencil className="w-3 h-3" /> Edit
-                          </button>
-                          <button
-                            onClick={() => setConfirmDelete(event.id)}
-                            className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#e8724a] py-2.5 hover:bg-[#fdf0ea] transition-colors border-l border-[#ede8e0]"
-                          >
-                            <Trash2 className="w-3 h-3" /> Delete
-                          </button>
-                        </div>
-                      )}
+                      {(() => {
+                        const canEdit = currentPerson && (
+                          event.created_by === currentPerson.id ||
+                          event.participants.some((p) => p.person_id === currentPerson.id)
+                        )
+                        if (!canEdit) return null
+                        return confirmDelete === event.id ? (
+                          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-50 border-t border-red-100">
+                            <span className="text-xs text-red-600 flex-1">Delete this event?</span>
+                            <button onClick={() => handleDelete(event.id)} disabled={deleting}
+                              className="text-xs font-medium text-white bg-red-500 px-2.5 py-1 rounded-full">
+                              {deleting ? '…' : 'Yes'}
+                            </button>
+                            <button onClick={() => setConfirmDelete(null)} className="text-xs text-[#9c8b75] px-2 py-1">Cancel</button>
+                          </div>
+                        ) : (
+                          <div className="flex border-t border-[#ede8e0]">
+                            <button
+                              onClick={() => setEditingId(event.id)}
+                              className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
+                            >
+                              <Pencil className="w-3 h-3" /> Edit
+                            </button>
+                            <button
+                              onClick={() => setConfirmDelete(event.id)}
+                              className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#e8724a] py-2.5 hover:bg-[#fdf0ea] transition-colors border-l border-[#ede8e0]"
+                            >
+                              <Trash2 className="w-3 h-3" /> Delete
+                            </button>
+                          </div>
+                        )
+                      })()}
                     </div>
                   )
                 })
