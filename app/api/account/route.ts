@@ -44,6 +44,20 @@ function getServiceRoleKey() {
   )
 }
 
+function getPublicClient() {
+  const url = getSupabaseUrl()
+  const anonKey = getServerEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+
+  if (!url || !anonKey) return null
+
+  return createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
+
 function getAdminClient() {
   const url = getSupabaseUrl()
   const serviceRoleKey = getServiceRoleKey()
@@ -72,15 +86,17 @@ export async function DELETE(request: Request) {
   }
 
   const admin = getAdminClient()
+  const publicClient = getPublicClient()
+  const reader = admin ?? publicClient
 
-  if (!admin) {
+  if (!reader) {
     return Response.json(
-      { error: 'Account deletion needs SUPABASE_SERVICE_ROLE_KEY on the server.' },
+      { error: 'Account deletion needs Supabase environment variables on the server.' },
       { status: 500 }
     )
   }
 
-  const { data: person, error: personError } = await admin
+  const { data: person, error: personError } = await reader
     .from('people')
     .select('id, auth_user_id')
     .eq('id', body.personId)
@@ -91,6 +107,13 @@ export async function DELETE(request: Request) {
   }
 
   if (person.auth_user_id) {
+    if (!admin) {
+      return Response.json(
+        { error: 'Password-protected account deletion needs SUPABASE_SERVICE_ROLE_KEY on the server.' },
+        { status: 500 }
+      )
+    }
+
     const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
 
     if (!token) {
@@ -110,7 +133,13 @@ export async function DELETE(request: Request) {
     }
   }
 
-  const { data: deletedPerson, error: deletePersonError } = await admin
+  const writer = admin ?? publicClient
+
+  if (!writer) {
+    return Response.json({ error: 'Could not connect to Supabase.' }, { status: 500 })
+  }
+
+  const { data: deletedPerson, error: deletePersonError } = await writer
     .from('people')
     .delete()
     .eq('id', body.personId)
