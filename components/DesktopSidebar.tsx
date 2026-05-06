@@ -107,19 +107,24 @@ export function DesktopSidebar() {
   }
 
   return (
-    <aside className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-30 bg-white border-r border-[#ede8e0] transition-all duration-200 ${collapsed ? 'w-14' : 'w-52'}`}>
-      {/* Logo — click to toggle sidebar collapse */}
+    <aside className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-30 border-r border-[#e0d8cc] transition-all duration-200 ${collapsed ? 'w-14' : 'w-52'}`}
+      style={{ background: 'linear-gradient(180deg, #fdf9f4 0%, #faf6ef 100%)' }}>
+      {/* Logo */}
       <button
         onClick={toggleCollapse}
         title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        className={`flex items-center h-14 border-b border-[#ede8e0] px-3 w-full hover:bg-[#f3efe8] transition-colors ${collapsed ? 'justify-center' : 'gap-2.5'}`}
+        className={`flex items-center h-14 border-b border-[#e0d8cc] px-3 w-full hover:bg-[#f5ede0]/60 transition-colors ${collapsed ? 'justify-center' : 'gap-2.5'}`}
       >
-        <div className="w-7 h-7 rounded-lg bg-[#5b4cf5] flex items-center justify-center flex-shrink-0">
+        <div className="w-7 h-7 rounded-lg bg-[#5b4cf5] flex items-center justify-center flex-shrink-0 shadow-sm">
           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
         </div>
-        {!collapsed && <span className="text-sm font-bold text-[#1a1614] truncate">Trip Coordinator</span>}
+        {!collapsed && (
+          <span className="text-sm font-bold text-[#1a1614] truncate" style={{ fontFamily: 'var(--font-display)' }}>
+            Trip Coordinator
+          </span>
+        )}
       </button>
 
       {/* Nav links */}
@@ -131,8 +136,10 @@ export function DesktopSidebar() {
             <Link
               key={href}
               href={href}
-              className={`relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors ${
-                active ? 'bg-[#5b4cf5]/10 text-[#5b4cf5]' : 'text-[#9c8b75] hover:bg-[#f3efe8] hover:text-[#1a1614]'
+              className={`relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-all ${
+                active
+                  ? 'bg-[#5b4cf5]/10 text-[#5b4cf5] shadow-[inset_2px_0_0_#5b4cf5]'
+                  : 'text-[#8a7a68] hover:bg-[#f0e9de]/70 hover:text-[#1a1614]'
               } ${collapsed ? 'justify-center' : ''}`}
               title={collapsed ? label : undefined}
             >
@@ -149,23 +156,25 @@ export function DesktopSidebar() {
 
         <Link
           href="/events/new"
-          className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium bg-[#5b4cf5] text-white hover:bg-[#4a3dd4] active:scale-[0.98] transition-all mt-2 ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium bg-[#5b4cf5] text-white hover:bg-[#4a3dd4] active:scale-[0.98] transition-all mt-2 shadow-sm ${collapsed ? 'justify-center' : ''}`}
           title={collapsed ? '+ Event' : undefined}
         >
           <Plus className="w-4 h-4 flex-shrink-0" />
           {!collapsed && 'New Event'}
         </Link>
 
-        {/* Secondary nav — less-used sections */}
-        <div className={`pt-2 mt-1 border-t border-[#ede8e0] space-y-0.5`}>
+        {/* Secondary nav */}
+        <div className="pt-2 mt-1 border-t border-[#e0d8cc]/70 space-y-0.5">
           {SECONDARY_NAV.map(({ href, label, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + '/')
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                  active ? 'bg-[#5b4cf5]/10 text-[#5b4cf5]' : 'text-[#c9b99f] hover:bg-[#f3efe8] hover:text-[#6b5d4f]'
+                className={`flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all ${
+                  active
+                    ? 'bg-[#5b4cf5]/8 text-[#5b4cf5] shadow-[inset_2px_0_0_#5b4cf5]'
+                    : 'text-[#b0a090] hover:bg-[#f0e9de]/70 hover:text-[#6b5d4f]'
                 } ${collapsed ? 'justify-center' : ''}`}
                 title={collapsed ? label : undefined}
               >
@@ -177,24 +186,24 @@ export function DesktopSidebar() {
         </div>
       </nav>
 
-      {/* User + sign-out + collapse */}
-      <div className="border-t border-[#ede8e0] p-2 space-y-0.5">
+      {/* User + actions */}
+      <div className="border-t border-[#e0d8cc] p-2 space-y-0.5">
         {userName && (
           <div className={`flex items-center gap-2.5 px-2.5 py-2 ${collapsed ? 'justify-center' : ''}`}>
             <span
-              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 shadow-sm"
               style={{ backgroundColor: userColor }}
             >
               {userName.charAt(0).toUpperCase()}
             </span>
             {!collapsed && (
-              <span className="text-xs font-medium text-[#1a1614] flex-1 truncate">{userName.split(' ')[0]}</span>
+              <span className="text-xs font-semibold text-[#4a3d32] flex-1 truncate">{userName.split(' ')[0]}</span>
             )}
           </div>
         )}
         <button
           onClick={openOnboarding}
-          className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f3efe8] hover:text-[#1a1614] transition-colors ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f0e9de]/70 hover:text-[#1a1614] transition-colors ${collapsed ? 'justify-center' : ''}`}
           title={collapsed ? 'Help' : undefined}
         >
           <HelpCircle className="w-3.5 h-3.5 flex-shrink-0" />
@@ -210,7 +219,7 @@ export function DesktopSidebar() {
         </button>
         <button
           onClick={toggleCollapse}
-          className={`flex items-center gap-2 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f3efe8] transition-colors ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f0e9de]/70 transition-colors ${collapsed ? 'justify-center' : ''}`}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span>Collapse</span></>}

@@ -22,10 +22,10 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
   const stayingCount = event.participants.filter((p) => p.staying_at_apartment).length
   const content = (
     <div
-      className={`group bg-white border border-[#ede8e0] rounded-xl overflow-hidden text-left transition-all duration-150 ${href ? 'hover:border-[#5b4cf5]/30 hover:-translate-y-0.5 hover:shadow-lg' : ''}`}
-      style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}
+      className={`group bg-white border border-[#e8e0d5] rounded-xl overflow-hidden text-left transition-all duration-200 ${href ? 'hover:border-[#5b4cf5]/35 hover:-translate-y-0.5' : ''}`}
+      style={{ boxShadow: href ? undefined : '0 1px 3px rgba(90,50,10,0.08), 0 4px 12px rgba(90,50,10,0.05)' }}
     >
-      <div className="h-1" style={{ backgroundColor: locationColor }} />
+      <div className="h-[3px]" style={{ backgroundColor: locationColor }} />
       <div className={compact ? 'p-3' : 'p-4'}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

@@ -10,6 +10,7 @@ export interface PresenceEntry {
   name: string
   color: string
   page: string
+  online_at?: number
 }
 
 interface TripContextValue {
@@ -87,10 +88,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState<PresenceEntry>()
+        const now = Date.now()
         const ids = new Set<string>()
         for (const entries of Object.values(state)) {
           for (const e of entries) {
-            if (e.personId) ids.add(e.personId)
+            // Only consider presence fresh if updated within the last 2 minutes
+            const age = e.online_at ? now - e.online_at : Infinity
+            if (e.personId && age < 120_000) ids.add(e.personId)
           }
         }
         setOnlinePersonIds(ids)
@@ -103,6 +107,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
             name: personName,
             color: data?.color ?? '#5b4cf5',
             page: window.location.pathname,
+            online_at: Date.now(),
           })
         }
       })

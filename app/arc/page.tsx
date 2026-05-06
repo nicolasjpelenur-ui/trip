@@ -170,7 +170,7 @@ function ArcContent() {
             return (
               <div
                 key={person.id}
-                className="flex items-center border-b border-[#ede8e0] last:border-0 hover:bg-[#faf8f5]/60"
+                className="flex items-center border-b border-[#ede8e0] last:border-0 hover:bg-[#faf7f2]/60"
                 style={{ height: ROW_H }}
               >
                 {/* Name */}
@@ -240,7 +240,7 @@ function ArcContent() {
 export default function ArcPage() {
   return (
     <RealtimeProvider>
-      <div className="flex flex-col h-screen bg-[#faf8f5]">
+      <div className="flex flex-col h-screen bg-[#faf7f2]">
         <NavBar />
         <ArcContent />
       </div>

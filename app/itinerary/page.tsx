@@ -61,7 +61,7 @@ function ItineraryCard({ event, currentPersonId }: { event: EventWithDetails; cu
       <div className="h-1.5" style={{ backgroundColor: color }} />
 
       {/* Header */}
-      <button onClick={toggle} className="w-full text-left px-4 pt-3.5 pb-3 hover:bg-[#faf8f5] transition-colors">
+      <button onClick={toggle} className="w-full text-left px-4 pt-3.5 pb-3 hover:bg-[#faf7f2] transition-colors">
         <div className="flex items-start gap-3">
           <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${color}22` }}>
             {createElement(Icon, { className: 'w-4 h-4', style: { color } })}
@@ -218,7 +218,7 @@ function ItineraryContent() {
           <Map className="w-5 h-5 text-[#e8724a]" />
         </span>
         <div>
-          <h1 className="text-2xl font-bold text-[#1a1614]">My Itineraries</h1>
+          <h1 className="text-2xl font-bold text-[#1a1614] font-display">My Itineraries</h1>
           <p className="text-sm text-[#9c8b75]">Events you're part of — tap to see the day-by-day plan</p>
         </div>
       </div>
@@ -265,7 +265,7 @@ function ItineraryContent() {
 export default function ItineraryPage() {
   return (
     <RealtimeProvider>
-      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+      <div className="flex flex-col min-h-screen bg-[#faf7f2]">
         <NavBar />
         <ItineraryContent />
       </div>

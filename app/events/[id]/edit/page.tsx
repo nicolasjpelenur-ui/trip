@@ -41,7 +41,7 @@ export default function EditEventPage() {
 
   return (
     <RealtimeProvider>
-      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+      <div className="flex flex-col min-h-screen bg-[#faf7f2]">
         <NavBar />
         <EditEventContent id={id} />
       </div>

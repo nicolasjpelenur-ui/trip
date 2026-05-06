@@ -146,7 +146,7 @@ export function OnboardingHost() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-sm border-[#ede8e0] p-0 overflow-hidden" style={{ backgroundColor: '#faf8f5' }}>
+      <DialogContent className="max-w-sm border-[#ede8e0] p-0 overflow-hidden" style={{ backgroundColor: '#faf7f2' }}>
         <div className="p-6">
           <DialogHeader>
             <DialogTitle className="sr-only">Trip Coordinator guide</DialogTitle>

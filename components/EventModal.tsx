@@ -234,7 +234,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
 
   return (
     <Dialog open={!!date} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-sm w-full animate-sheet border-[#ede8e0]" style={{ backgroundColor: '#faf8f5' }}>
+      <DialogContent className="max-w-sm w-full animate-sheet border-[#ede8e0]" style={{ backgroundColor: '#faf7f2' }}>
         <DialogHeader>
           <div className="flex items-center gap-2">
             {(creating || editingId) && (
@@ -291,7 +291,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                     >
                       <button
                         onClick={() => setExpandedEvent(expanded ? null : event.id)}
-                        className="w-full text-left hover:bg-[#faf8f5] transition-colors"
+                        className="w-full text-left hover:bg-[#faf7f2] transition-colors"
                       >
                         <EventSummaryCard event={event} />
                       </button>

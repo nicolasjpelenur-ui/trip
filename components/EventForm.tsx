@@ -163,7 +163,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
           value={title}
           autoFocus
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf8f5]"
+          className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf7f2]"
         />
       </div>
 
@@ -239,7 +239,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
             type="date"
             value={startDate}
             onChange={(e) => { setStartDate(e.target.value); if (endDate < e.target.value) setEndDate(e.target.value) }}
-            className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5] text-[#1a1614]"
+            className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
           />
         </div>
         <div>
@@ -249,7 +249,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
             value={endDate}
             min={startDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5] text-[#1a1614]"
+            className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
           />
         </div>
       </div>
@@ -360,7 +360,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          className="rounded-xl resize-none border-[#ede8e0] bg-[#faf8f5] focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] text-[#1a1614]"
+          className="rounded-xl resize-none border-[#ede8e0] bg-[#faf7f2] focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] text-[#1a1614]"
         />
       </div>
 

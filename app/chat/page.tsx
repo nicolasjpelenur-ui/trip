@@ -184,14 +184,14 @@ function ChatContent() {
                 placeholder="Group name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf8f5]"
+                className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf7f2]"
               />
               <input
                 type="text"
                 placeholder="Description (optional)"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
-                className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf8f5]"
+                className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf7f2]"
               />
               <div>
                 <p className="text-xs text-[#9c8b75] mb-1.5">Color</p>
@@ -280,7 +280,7 @@ function ChatContent() {
 export default function ChatPage() {
   return (
     <RealtimeProvider>
-      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+      <div className="flex flex-col min-h-screen bg-[#faf7f2]">
         <NavBar />
         <ChatContent />
       </div>

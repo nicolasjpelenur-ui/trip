@@ -6,14 +6,16 @@ import { NavBar } from '@/components/NavBar'
 import { RealtimeProvider } from '@/components/RealtimeProvider'
 import { ChatRoom } from '@/components/ChatRoom'
 import { PersonAvatar } from '@/components/PersonChip'
-import { GroupWithMembers, getGroupWithMembers, deleteGroup } from '@/lib/chatQueries'
-import { ChevronLeft, Trash2 } from 'lucide-react'
+import { GroupWithMembers, getGroupWithMembers, deleteGroup, leaveGroup } from '@/lib/chatQueries'
+import { ChevronLeft, LogOut, Trash2 } from 'lucide-react'
+
+type ConfirmAction = 'delete' | 'leave' | null
 
 function ChatRoomContent({ id }: { id: string }) {
   const router = useRouter()
   const [group, setGroup] = useState<GroupWithMembers | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [confirm, setConfirm] = useState<ConfirmAction>(null)
+  const [acting, setActing] = useState(false)
   const currentPersonId = typeof window !== 'undefined' ? localStorage.getItem('currentPersonId') ?? '' : ''
 
   useEffect(() => {
@@ -21,12 +23,23 @@ function ChatRoomContent({ id }: { id: string }) {
   }, [id])
 
   async function handleDelete() {
-    setDeleting(true)
+    setActing(true)
     try {
       await deleteGroup(id)
       router.replace('/chat')
     } finally {
-      setDeleting(false)
+      setActing(false)
+    }
+  }
+
+  async function handleLeave() {
+    if (!currentPersonId) return
+    setActing(true)
+    try {
+      await leaveGroup(id, currentPersonId)
+      router.replace('/chat')
+    } finally {
+      setActing(false)
     }
   }
 
@@ -39,6 +52,7 @@ function ChatRoomContent({ id }: { id: string }) {
   const isDm = group.is_dm
   const otherPerson = isDm ? group.members.find((m) => m.id !== currentPersonId) : null
   const isCreator = group.created_by === currentPersonId
+  const isMember = group.members.some((m) => m.id === currentPersonId)
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -87,26 +101,43 @@ function ChatRoomContent({ id }: { id: string }) {
           </>
         )}
 
-        {/* Delete button — creator or DM participant */}
-        {(isCreator || isDm) && !confirmDelete && (
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="ml-1 p-1.5 rounded-lg text-[#9c8b75] hover:text-[#e8724a] hover:bg-[#fdf0ea] transition-colors flex-shrink-0"
-            title="Delete conversation"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+        {/* Action buttons — shown when no confirm state */}
+        {!confirm && (
+          <div className="flex items-center gap-1 ml-1 flex-shrink-0">
+            {/* Leave — non-creator group members and DM participants */}
+            {!isCreator && isMember && (
+              <button
+                onClick={() => setConfirm('leave')}
+                className="p-1.5 rounded-lg text-[#9c8b75] hover:text-[#e8724a] hover:bg-[#fdf0ea] transition-colors"
+                title="Leave conversation"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
+            {/* Delete — creator only */}
+            {isCreator && (
+              <button
+                onClick={() => setConfirm('delete')}
+                className="p-1.5 rounded-lg text-[#9c8b75] hover:text-[#e8724a] hover:bg-[#fdf0ea] transition-colors"
+                title="Delete group"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         )}
-        {confirmDelete && (
+
+        {confirm && (
           <div className="flex items-center gap-2 ml-1 flex-shrink-0">
+            <span className="text-xs text-[#6b5d4f]">{confirm === 'delete' ? 'Delete group?' : 'Leave group?'}</span>
             <button
-              onClick={handleDelete}
-              disabled={deleting}
+              onClick={confirm === 'delete' ? handleDelete : handleLeave}
+              disabled={acting}
               className="text-xs font-medium text-white bg-red-500 px-2.5 py-1 rounded-full"
             >
-              {deleting ? '…' : 'Delete'}
+              {acting ? '…' : confirm === 'delete' ? 'Delete' : 'Leave'}
             </button>
-            <button onClick={() => setConfirmDelete(false)} className="text-xs text-[#9c8b75]">Cancel</button>
+            <button onClick={() => setConfirm(null)} className="text-xs text-[#9c8b75]">Cancel</button>
           </div>
         )}
       </div>
@@ -121,7 +152,7 @@ export default function ChatRoomPage() {
 
   return (
     <RealtimeProvider>
-      <div className="flex flex-col h-screen bg-[#faf8f5]">
+      <div className="flex flex-col h-screen bg-[#faf7f2]">
         <NavBar />
         <ChatRoomContent id={id} />
       </div>

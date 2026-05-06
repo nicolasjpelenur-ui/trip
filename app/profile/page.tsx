@@ -188,7 +188,7 @@ function ProfileContent() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5]"
+                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2]"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ function ProfileContent() {
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               maxLength={60}
-              className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5]"
+              className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2]"
             />
           </div>
 
@@ -247,7 +247,7 @@ function ProfileContent() {
                 placeholder="Email"
                 value={pwEmail}
                 onChange={(e) => setPwEmail(e.target.value)}
-                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5]"
+                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2]"
               />
               <div className="relative">
                 <input
@@ -255,7 +255,7 @@ function ProfileContent() {
                   placeholder="New password (min 6 chars)"
                   value={pwPassword}
                   onChange={(e) => setPwPassword(e.target.value)}
-                  className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5]"
+                  className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2]"
                 />
                 <button
                   type="button"
@@ -321,7 +321,7 @@ function ProfileContent() {
 export default function ProfilePage() {
   return (
     <RealtimeProvider>
-      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+      <div className="flex flex-col min-h-screen bg-[#faf7f2]">
         <NavBar />
         <ProfileContent />
       </div>

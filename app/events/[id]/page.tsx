@@ -97,7 +97,7 @@ function JoinBanner({
                 type="date"
                 value={arrival}
                 onChange={(e) => { setArrival(e.target.value); if (departure < e.target.value) setDeparture(e.target.value) }}
-                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5] text-[#1a1614]"
+                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
               />
             </div>
             <div>
@@ -107,7 +107,7 @@ function JoinBanner({
                 value={departure}
                 min={arrival}
                 onChange={(e) => setDeparture(e.target.value)}
-                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5] text-[#1a1614]"
+                className="w-full border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
               />
             </div>
           </div>
@@ -353,7 +353,7 @@ function EventDetailContent({ id }: { id: string }) {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-lg font-bold text-[#1a1614]">Itinerary</h2>
+              <h2 className="text-lg font-bold text-[#1a1614] font-display">Itinerary</h2>
               <p className="text-sm text-[#9c8b75]">Plan each day with activities, places, and flexible timing.</p>
             </div>
           </div>
@@ -369,7 +369,7 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   return (
     <RealtimeProvider>
-      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+      <div className="flex flex-col min-h-screen bg-[#faf7f2]">
         <NavBar />
         <EventDetailContent id={id} />
       </div>

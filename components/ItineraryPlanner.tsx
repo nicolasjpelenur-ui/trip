@@ -360,7 +360,7 @@ function ItineraryItemRow({
           </button>
 
           {expanded && (
-            <div className="mt-2 space-y-2 rounded-lg bg-[#faf8f5] p-3 text-xs leading-relaxed text-[#5f5346]">
+            <div className="mt-2 space-y-2 rounded-lg bg-[#faf7f2] p-3 text-xs leading-relaxed text-[#5f5346]">
               {item.address && <p>{item.address}</p>}
               {item.notes && (
                 <p className="flex items-start gap-2">
@@ -523,7 +523,7 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
         const editingDay = editingDayId === day.id
 
         return (
-          <section key={day.id} className="overflow-hidden rounded-xl border border-[#e8e0d6] bg-[#faf8f5]" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+          <section key={day.id} className="overflow-hidden rounded-xl border border-[#e8e0d6] bg-[#faf7f2]" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
             <div className="border-b border-[#e8e0d6] bg-white p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

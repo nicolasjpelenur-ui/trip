@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-display: var(--font-display);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -50,16 +51,18 @@
 
 :root {
   /* Trip Coordinator warm palette */
-  --bg: #faf8f5;
+  --bg: #faf7f2;
   --surface: #ffffff;
-  --border-warm: #ede8e0;
+  --surface-warm: #fdf9f5;
+  --border-warm: #e8e0d5;
   --primary-trip: #5b4cf5;
   --accent-trip: #e8724a;
   --text-trip: #1a1614;
   --muted-trip: #9c8b75;
+  --font-display: 'Playfair Display', Georgia, serif;
 
   /* shadcn overrides — warm tones */
-  --background: #faf8f5;
+  --background: #faf7f2;
   --foreground: #1a1614;
   --card: #ffffff;
   --card-foreground: #1a1614;
@@ -74,8 +77,8 @@
   --accent: #fdf0ea;
   --accent-foreground: #e8724a;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #ede8e0;
-  --input: #ede8e0;
+  --border: #e8e0d5;
+  --input: #e8e0d5;
   --ring: #5b4cf5;
   --chart-1: #5b4cf5;
   --chart-2: #e8724a;
@@ -133,9 +136,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
   }
   html {
     @apply font-sans;
+  }
+  /* Display headings using Playfair Display */
+  .font-display {
+    font-family: var(--font-display);
   }
 }
 
@@ -200,9 +209,7 @@
   }
 }
 
-/* ── Presence pulse ── */
-@keyframes presencePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-.animate-presence { animation: presencePulse 2s ease-in-out infinite; }
+/* ── Card shadows ── */
+.card-shadow   { box-shadow: 0 1px 3px rgba(90,50,10,0.08), 0 4px 12px rgba(90,50,10,0.05); }
+.card-shadow-md { box-shadow: 0 2px 8px rgba(90,50,10,0.10), 0 8px 24px rgba(90,50,10,0.07); }
+.card-shadow-hover { box-shadow: 0 4px 16px rgba(90,50,10,0.12), 0 12px 32px rgba(90,50,10,0.08); }

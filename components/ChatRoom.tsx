@@ -162,7 +162,7 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
             }}
             placeholder="Type a message…"
             rows={1}
-            className="flex-1 resize-none border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf8f5] text-[#1a1614] placeholder:text-[#9c8b75] max-h-28"
+            className="flex-1 resize-none border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf7f2] text-[#1a1614] placeholder:text-[#9c8b75] max-h-28"
           />
           <button
             onClick={handleSend}

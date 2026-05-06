@@ -79,7 +79,7 @@ export default function HomePage() {
   // Password sign-in screen
   if (authPerson) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#faf8f5]">
+      <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#faf7f2]">
         <div className="w-full max-w-xs">
           <div className="flex flex-col items-center mb-6">
             <PersonAvatar person={authPerson} size="lg" />
@@ -95,7 +95,7 @@ export default function HomePage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSignIn()}
-                className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf8f5] pr-10"
+                className="w-full border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf7f2] pr-10"
               />
               <button
                 type="button"
@@ -126,7 +126,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#faf8f5]">
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#faf7f2]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#5b4cf5] mb-4 shadow-lg">
@@ -203,7 +203,7 @@ export default function HomePage() {
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddPerson()}
-                    className="flex-1 border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf8f5]"
+                    className="flex-1 border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf7f2]"
                   />
                 </div>
                 <div>

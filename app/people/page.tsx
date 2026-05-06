@@ -65,7 +65,7 @@ function OverlapCalculator({ people, events }: { people: Person[]; events: Event
         <select
           value={a}
           onChange={(e) => setA(e.target.value)}
-          className="flex-1 border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5] text-[#1a1614]"
+          className="flex-1 border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
         >
           <option value="">Person A</option>
           {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -74,7 +74,7 @@ function OverlapCalculator({ people, events }: { people: Person[]; events: Event
         <select
           value={b}
           onChange={(e) => setB(e.target.value)}
-          className="flex-1 border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf8f5] text-[#1a1614]"
+          className="flex-1 border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
         >
           <option value="">Person B</option>
           {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -196,7 +196,7 @@ function PeopleContent() {
 export default function PeoplePage() {
   return (
     <RealtimeProvider>
-      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+      <div className="flex flex-col min-h-screen bg-[#faf7f2]">
         <NavBar />
         <PeopleContent />
       </div>

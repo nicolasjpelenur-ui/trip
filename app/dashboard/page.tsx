@@ -22,7 +22,6 @@ import {
   CalendarDays,
   ChevronRight,
   Clock,
-  LayoutDashboard,
   Map,
   MessageSquare,
   Plus,
@@ -173,10 +172,7 @@ function CountdownBanner({ event }: { event: EventWithDetails }) {
   const label = days === 0 ? 'starts today!' : `starts in ${days} day${days === 1 ? '' : 's'}!`
   return (
     <div className="relative rounded-2xl bg-gradient-to-r from-[#5b4cf5] to-[#7c6cf7] text-white px-5 py-4 flex items-center gap-4">
-      <span className="relative flex-shrink-0">
-        <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-white opacity-40" />
-        <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
-      </span>
+      <span className="inline-flex rounded-full h-2.5 w-2.5 bg-white/80 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate">{event.title} {label}</p>
         <p className="text-xs text-white/70 mt-0.5">{format(parseISO(event.start_date), 'EEEE, MMM d')} · {event.location.name}</p>
@@ -339,10 +335,7 @@ function DashboardContent() {
 
       {onlineOthers.length > 0 && (
         <div className="flex items-center gap-2.5 px-1">
-          <span className="relative flex-shrink-0">
-            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-60" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
-          </span>
+          <span className="inline-flex rounded-full h-2 w-2 bg-green-400 flex-shrink-0" />
           <span className="text-xs text-[#9c8b75] font-medium">Online now</span>
           <div className="flex items-center gap-1">
             {onlineOthers.slice(0, 8).map((p) => (
@@ -357,15 +350,14 @@ function DashboardContent() {
       )}
 
       <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3.5">
           <PersonAvatar person={currentPerson} size="lg" />
           <div>
-            <div className="flex items-center gap-2">
-              <LayoutDashboard className="w-4 h-4 text-[#5b4cf5]" />
-              <h1 className="text-2xl font-bold text-[#1a1614]">Dashboard</h1>
-            </div>
-            <p className="text-sm text-[#9c8b75]">
-              {currentPerson.status || `Welcome back, ${currentPerson.name.split(' ')[0]}`}
+            <h1 className="text-2xl font-bold text-[#1a1614] font-display leading-tight">
+              {currentPerson.name.split(' ')[0]}&apos;s trips
+            </h1>
+            <p className="text-sm text-[#9c8b75] mt-0.5">
+              {currentPerson.status || format(t, 'EEEE, MMMM d')}
             </p>
           </div>
         </div>
@@ -509,7 +501,7 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <RealtimeProvider>
-      <div className="flex flex-col min-h-screen bg-[#faf8f5]">
+      <div className="flex flex-col min-h-screen bg-[#faf7f2]">
         <NavBar />
         <DashboardContent />
       </div>

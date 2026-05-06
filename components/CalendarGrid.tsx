@@ -230,7 +230,7 @@ function MonthGrid({
                     return (
                       <div
                         key={day.toISOString()}
-                        className="border-r border-[#ede8e0] last:border-r-0 bg-[#faf8f5]/60"
+                        className="border-r border-[#ede8e0] last:border-r-0 bg-[#faf7f2]/60"
                         style={{ minHeight: 70 }}
                       />
                     )
@@ -407,7 +407,7 @@ export function CalendarGrid() {
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
   return (
-    <div className="flex flex-col h-full bg-[#faf8f5]">
+    <div className="flex flex-col h-full bg-[#faf7f2]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#ede8e0] bg-white gap-2">
         <div className="flex items-center gap-1 flex-shrink-0">
