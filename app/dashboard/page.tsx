@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   addDays,
@@ -16,6 +16,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns'
+
 import {
   BarChart2,
   CalendarDays,
@@ -36,6 +37,7 @@ import { EventWithDetails, Person } from '@/lib/supabase'
 import { getPollsForEvent, getPollsForGroup, Poll } from '@/lib/pollQueries'
 import { getEventItinerary } from '@/lib/itineraryQueries'
 import { ItineraryDayWithItems } from '@/lib/supabase'
+import { canEditEvent, canSeeEvent, eventCountdownLabel, isUpcoming, today } from '@/lib/eventUtils'
 
 type ChatPreview = {
   group: GroupWithMembers
@@ -48,32 +50,6 @@ type PendingPoll = {
   poll: Poll
   sourceTitle: string
   href: string
-}
-
-function canSeeEvent(event: EventWithDetails, personId: string) {
-  if ((event.visibility ?? 'all') === 'all') return true
-  return (
-    event.created_by === personId ||
-    event.participants.some((participant) => participant.person_id === personId) ||
-    (event.viewers ?? []).some((viewer) => viewer.person_id === personId)
-  )
-}
-
-function isCurrentPersonEvent(event: EventWithDetails, personId: string) {
-  return event.created_by === personId || event.participants.some((participant) => participant.person_id === personId)
-}
-
-function countdownLabel(event: EventWithDetails) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const start = parseISO(event.start_date)
-  const end = parseISO(event.end_date)
-  const startsIn = differenceInCalendarDays(start, today)
-  const endsIn = differenceInCalendarDays(end, today)
-
-  if (startsIn > 0) return `${startsIn} day${startsIn === 1 ? '' : 's'} away`
-  if (endsIn >= 0) return 'In progress'
-  return 'Finished'
 }
 
 function MiniCalendar({ events }: { events: EventWithDetails[] }) {
@@ -136,6 +112,57 @@ function MiniCalendar({ events }: { events: EventWithDetails[] }) {
   )
 }
 
+function ItineraryWidget({ nextEvent, nextItinerary }: { nextEvent: EventWithDetails | undefined; nextItinerary: ItineraryDayWithItems[] }) {
+  if (!nextEvent) {
+    return <p className="text-sm text-[#9c8b75] py-3">Create an event to start planning your days.</p>
+  }
+  const t = today()
+  const todayStr = format(t, 'yyyy-MM-dd')
+  const todayDay = nextItinerary.find((d) => d.day_date === todayStr)
+  const displayDay = todayDay ?? nextItinerary.find((d) => d.items.length > 0)
+  const totalDays = nextItinerary.length
+  const daysIn = differenceInCalendarDays(t, parseISO(nextEvent.start_date))
+  const eventInProgress = daysIn >= 0 && differenceInCalendarDays(parseISO(nextEvent.end_date), t) >= 0
+
+  return (
+    <>
+      <p className="text-xs text-[#9c8b75] mb-2 truncate">
+        {nextEvent.title} · {totalDays} day{totalDays !== 1 ? 's' : ''}
+        {eventInProgress && <span className="ml-1 text-[#5b4cf5] font-medium">· Day {daysIn + 1}</span>}
+      </p>
+      {displayDay ? (
+        <div className="space-y-1.5 mb-3">
+          <p className="text-[11px] font-semibold text-[#9c8b75] uppercase tracking-wide">
+            {eventInProgress && todayDay ? 'Today' : format(parseISO(displayDay.day_date), 'EEE, MMM d')}
+          </p>
+          {displayDay.items.slice(0, 3).map((item) => (
+            <div key={item.id} className="flex items-start gap-2 rounded-lg bg-[#f3efe8] px-2.5 py-1.5">
+              {item.start_time && (
+                <span className="text-[10px] text-[#9c8b75] font-medium mt-0.5 w-10 flex-shrink-0">
+                  {item.start_time.slice(0, 5)}
+                </span>
+              )}
+              <span className="text-xs text-[#1a1614] font-medium truncate">{item.title}</span>
+              {item.place_name && (
+                <span className="text-[10px] text-[#9c8b75] truncate ml-auto flex-shrink-0">{item.place_name}</span>
+              )}
+            </div>
+          ))}
+          {displayDay.items.length === 0 && (
+            <p className="text-xs text-[#9c8b75]">Nothing planned for this day yet.</p>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-[#9c8b75] mb-3">No itinerary items yet — open the event to start planning.</p>
+      )}
+      <Link href={`/events/${nextEvent.id}`} className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#5b4cf5] text-white text-sm font-medium py-2 hover:bg-[#4a3dd4]">
+        Open itinerary
+        <ChevronRight className="w-4 h-4" />
+      </Link>
+    </>
+  )
+}
+
 function DashboardContent() {
   const router = useRouter()
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
@@ -188,7 +215,7 @@ function DashboardContent() {
       }))
 
       const eventPollEntries = await Promise.all(
-        visibleEvents.filter((event) => isCurrentPersonEvent(event, personId)).map(async (event) => ({
+        visibleEvents.filter((event) => canEditEvent(event, personId)).map(async (event) => ({
           title: event.title,
           href: '/calendar',
           polls: await getPollsForEvent(event.id),
@@ -211,10 +238,7 @@ function DashboardContent() {
       )
 
       // Load itinerary for the next upcoming event
-      const upcomingEvents = visibleEvents.filter((e) => {
-        const today = new Date(); today.setHours(0,0,0,0)
-        return parseISO(e.end_date) >= today
-      })
+      const upcomingEvents = visibleEvents.filter(isUpcoming)
       let itinerary: ItineraryDayWithItems[] = []
       if (upcomingEvents.length > 0) {
         try { itinerary = await getEventItinerary(upcomingEvents[0]) } catch { /* noop */ }
@@ -234,15 +258,9 @@ function DashboardContent() {
     return () => { cancelled = true }
   }, [router])
 
-  const today = useMemo(() => {
-    const value = new Date()
-    value.setHours(0, 0, 0, 0)
-    return value
-  }, [])
-
-  const futureEvents = events.filter((event) => parseISO(event.end_date) >= today)
-  const nextEvent = futureEvents[0]
-  const monthEvents = events.filter((event) => parseISO(event.start_date) <= endOfMonth(today) && parseISO(event.end_date) >= startOfMonth(today))
+  const t = today()
+  const nextEvent = events.filter(isUpcoming)[0]
+  const monthEvents = events.filter((e) => parseISO(e.start_date) <= endOfMonth(t) && parseISO(e.end_date) >= startOfMonth(t))
 
   if (loading) {
     return (
@@ -297,7 +315,7 @@ function DashboardContent() {
                 <h2 className="text-sm font-semibold text-[#1a1614]">Next up</h2>
                 <span className="inline-flex items-center gap-1 text-xs text-[#9c8b75]">
                   <Clock className="w-3.5 h-3.5" />
-                  {countdownLabel(nextEvent)}
+                  {eventCountdownLabel(nextEvent)}
                 </span>
               </div>
               <EventSummaryCard event={nextEvent} showCountdown href={`/events/${nextEvent.id}`} />
@@ -389,57 +407,7 @@ function DashboardContent() {
             </div>
             <Link href="/itinerary" className="text-xs text-[#5b4cf5] font-medium hover:underline">View all</Link>
           </div>
-          {(() => {
-            if (!nextEvent) {
-              return <p className="text-sm text-[#9c8b75] py-3">Create an event to start planning your days.</p>
-            }
-            const today = new Date(); today.setHours(0,0,0,0)
-            const todayStr = format(today, 'yyyy-MM-dd')
-            // If the event is in progress, show today's day; otherwise show first day with items
-            const todayDay = nextItinerary.find((d) => d.day_date === todayStr)
-            const displayDay = todayDay ?? nextItinerary.find((d) => d.items.length > 0)
-            const totalDays = nextItinerary.length
-            const daysIn = differenceInCalendarDays(today, parseISO(nextEvent.start_date))
-            const eventInProgress = daysIn >= 0 && differenceInCalendarDays(parseISO(nextEvent.end_date), today) >= 0
-
-            return (
-              <>
-                <p className="text-xs text-[#9c8b75] mb-2 truncate">
-                  {nextEvent.title} · {totalDays} day{totalDays !== 1 ? 's' : ''}
-                  {eventInProgress && <span className="ml-1 text-[#5b4cf5] font-medium">· Day {daysIn + 1}</span>}
-                </p>
-                {displayDay ? (
-                  <div className="space-y-1.5 mb-3">
-                    <p className="text-[11px] font-semibold text-[#9c8b75] uppercase tracking-wide">
-                      {eventInProgress && todayDay ? 'Today' : format(parseISO(displayDay.day_date), 'EEE, MMM d')}
-                    </p>
-                    {displayDay.items.slice(0, 3).map((item) => (
-                      <div key={item.id} className="flex items-start gap-2 rounded-lg bg-[#f3efe8] px-2.5 py-1.5">
-                        {item.start_time && (
-                          <span className="text-[10px] text-[#9c8b75] font-medium mt-0.5 w-10 flex-shrink-0">
-                            {item.start_time.slice(0, 5)}
-                          </span>
-                        )}
-                        <span className="text-xs text-[#1a1614] font-medium truncate">{item.title}</span>
-                        {item.place_name && (
-                          <span className="text-[10px] text-[#9c8b75] truncate ml-auto flex-shrink-0">{item.place_name}</span>
-                        )}
-                      </div>
-                    ))}
-                    {displayDay.items.length === 0 && (
-                      <p className="text-xs text-[#9c8b75]">Nothing planned for this day yet.</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-[#9c8b75] mb-3">No itinerary items yet — open the event to start planning.</p>
-                )}
-                <Link href={`/events/${nextEvent.id}`} className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#5b4cf5] text-white text-sm font-medium py-2 hover:bg-[#4a3dd4]">
-                  Open itinerary
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-              </>
-            )
-          })()}
+          <ItineraryWidget nextEvent={nextEvent} nextItinerary={nextItinerary} />
         </div>
       </section>
     </main>

@@ -2,30 +2,18 @@
 
 import Link from 'next/link'
 import { createElement } from 'react'
-import { differenceInCalendarDays, format, parseISO } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { CalendarDays, ChevronRight, EyeOff, Home, MessageCircle, Users } from 'lucide-react'
 import { EventWithDetails } from '@/lib/supabase'
 import { getLocationColor, getLocationIcon } from '@/lib/locationIcons'
 import { PersonAvatar } from './PersonChip'
+import { eventCountdownLabel } from '@/lib/eventUtils'
 
 interface EventSummaryCardProps {
   event: EventWithDetails
   compact?: boolean
   showCountdown?: boolean
   href?: string
-}
-
-function eventCountdown(event: EventWithDetails) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const start = parseISO(event.start_date)
-  const end = parseISO(event.end_date)
-  const startsIn = differenceInCalendarDays(start, today)
-  const endsIn = differenceInCalendarDays(end, today)
-
-  if (startsIn > 0) return `${startsIn} day${startsIn === 1 ? '' : 's'} to go`
-  if (endsIn >= 0) return 'Happening now'
-  return 'Completed'
 }
 
 export function EventSummaryCard({ event, compact = false, showCountdown = false, href }: EventSummaryCardProps) {
@@ -60,7 +48,7 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
               </span>
               {showCountdown && (
                 <span className="rounded-full bg-[#5b4cf5]/10 text-[#5b4cf5] px-2 py-0.5 font-medium">
-                  {eventCountdown(event)}
+                  {eventCountdownLabel(event)}
                 </span>
               )}
             </div>
@@ -109,7 +97,7 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
             )}
             {href && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#5b4cf5]/10 text-[#5b4cf5] px-2 py-0.5 text-[10px] font-medium">
-                Planner
+                Itinerary
                 <ChevronRight className="w-3 h-3" />
               </span>
             )}

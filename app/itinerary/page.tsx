@@ -14,14 +14,15 @@ import { getLocationColor, getLocationIcon } from '@/lib/locationIcons'
 import { getAllEvents, getPeople } from '@/lib/queries'
 import { getEventItinerary } from '@/lib/itineraryQueries'
 import { EventWithDetails, ItineraryDayWithItems, Person } from '@/lib/supabase'
+import { canSeeEvent, today } from '@/lib/eventUtils'
 import { createElement } from 'react'
 
 function eventStatus(event: EventWithDetails) {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const t = today()
   const start = parseISO(event.start_date)
   const end = parseISO(event.end_date)
-  const daysTo = differenceInCalendarDays(start, today)
-  const daysLeft = differenceInCalendarDays(end, today)
+  const daysTo = differenceInCalendarDays(start, t)
+  const daysLeft = differenceInCalendarDays(end, t)
   if (daysTo > 0) return { label: `${daysTo}d away`, color: '#5b4cf5', inProgress: false }
   if (daysLeft >= 0) return { label: `Day ${Math.abs(daysTo) + 1}`, color: '#2ba96a', inProgress: true }
   return { label: 'Finished', color: '#9c8b75', inProgress: false }
@@ -50,8 +51,8 @@ function ItineraryCard({ event, currentPersonId }: { event: EventWithDetails; cu
     setExpanded((v) => !v)
   }
 
-  const today = format(new Date(), 'yyyy-MM-dd')
-  const todayDay = days?.find((d) => d.day_date === today)
+  const todayStr = format(today(), 'yyyy-MM-dd')
+  const todayDay = days?.find((d) => d.day_date === todayStr)
   const highlightDay = todayDay ?? days?.[0]
 
   return (
@@ -115,7 +116,7 @@ function ItineraryCard({ event, currentPersonId }: { event: EventWithDetails; cu
                   <div className="flex items-center gap-2 mb-2">
                     <MapPin className="w-3.5 h-3.5 text-[#e8724a] flex-shrink-0" />
                     <span className="text-[11px] font-semibold text-[#6b5d4f] uppercase tracking-wide">
-                      {day.day_date === today
+                      {day.day_date === todayStr
                         ? 'Today'
                         : format(parseISO(day.day_date), 'EEEE, MMM d')}
                       {day.title ? ` · ${day.title}` : ''}
@@ -168,28 +169,21 @@ function ItineraryContent() {
       const person = people.find((p) => p.id === personId) ?? null
       if (!person) { router.replace('/'); return }
 
-      const today = new Date(); today.setHours(0, 0, 0, 0)
       const participated = allEvents
-        .filter((e) => {
-          const vis = e.visibility ?? 'all'
-          if (vis !== 'all') {
-            const canSee =
-              (e.viewers ?? []).some((v) => v.person_id === personId) ||
-              e.participants.some((p) => p.person_id === personId) ||
-              e.created_by === personId
-            if (!canSee) return false
-          }
-          return e.created_by === personId || e.participants.some((p) => p.person_id === personId)
-        })
+        .filter((e) =>
+          canSeeEvent(e, personId) &&
+          (e.created_by === personId || e.participants.some((p) => p.person_id === personId))
+        )
         .sort((a, b) => {
           // In-progress first, then upcoming, then finished
+          const t = today()
           const aEnd = parseISO(a.end_date)
           const bEnd = parseISO(b.end_date)
-          const aInProg = parseISO(a.start_date) <= today && aEnd >= today
-          const bInProg = parseISO(b.start_date) <= today && bEnd >= today
+          const aInProg = parseISO(a.start_date) <= t && aEnd >= t
+          const bInProg = parseISO(b.start_date) <= t && bEnd >= t
           if (aInProg !== bInProg) return aInProg ? -1 : 1
-          const aFuture = parseISO(a.start_date) > today
-          const bFuture = parseISO(b.start_date) > today
+          const aFuture = parseISO(a.start_date) > t
+          const bFuture = parseISO(b.start_date) > t
           if (aFuture !== bFuture) return aFuture ? -1 : 1
           return parseISO(a.start_date).getTime() - parseISO(b.start_date).getTime()
         })
@@ -213,9 +207,9 @@ function ItineraryContent() {
 
   if (!currentPerson) return null
 
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const upcoming = myEvents.filter((e) => parseISO(e.end_date) >= today)
-  const past = myEvents.filter((e) => parseISO(e.end_date) < today)
+  const t = today()
+  const upcoming = myEvents.filter((e) => parseISO(e.end_date) >= t)
+  const past = myEvents.filter((e) => parseISO(e.end_date) < t)
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-6">

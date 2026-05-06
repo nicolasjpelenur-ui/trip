@@ -51,15 +51,17 @@ function getWeekBars(events: EventWithDetails[], weekStart: Date, previewResizeI
   const rows: (string | null)[] = [null, null, null, null]
   const bars: WeekBar[] = []
 
+  const rangeCache = new Map(events.map((e) => [e.id, effectiveRange(e)]))
+
   const relevant = events
     .filter((e) => {
-      const { start: es, end: ee } = effectiveRange(e)
+      const { start: es, end: ee } = rangeCache.get(e.id)!
       return parseISO(es) <= weekEnd && parseISO(ee) >= weekStart
     })
     .sort((a, b) => parseISO(a.start_date).getTime() - parseISO(b.start_date).getTime())
 
   for (const event of relevant) {
-    const { start: effStart, end: effEnd } = effectiveRange(event)
+    const { start: effStart, end: effEnd } = rangeCache.get(event.id)!
     const start = parseISO(effStart)
     // Use preview end if we're resizing this event
     const end = (previewResizeId === event.id && previewResizeEnd) ? previewResizeEnd : parseISO(effEnd)
