@@ -353,7 +353,7 @@ function DashboardContent() {
         <div className="flex items-center gap-3.5">
           <PersonAvatar person={currentPerson} size="lg" />
           <div>
-            <h1 className="text-2xl font-bold text-[#1a1614] font-display leading-tight">
+            <h1 className="text-2xl font-bold text-[#1a1614] leading-tight">
               {currentPerson.name.split(' ')[0]}&apos;s trips
             </h1>
             <p className="text-sm text-[#9c8b75] mt-0.5">

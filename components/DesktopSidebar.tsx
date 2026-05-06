@@ -121,7 +121,7 @@ export function DesktopSidebar() {
           </svg>
         </div>
         {!collapsed && (
-          <span className="text-sm font-bold text-[#1a1614] truncate" style={{ fontFamily: 'var(--font-display)' }}>
+          <span className="text-sm font-bold text-[#1a1614] truncate">
             Trip Coordinator
           </span>
         )}
@@ -138,7 +138,7 @@ export function DesktopSidebar() {
               href={href}
               className={`relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition-all ${
                 active
-                  ? 'bg-[#5b4cf5]/10 text-[#5b4cf5] shadow-[inset_2px_0_0_#5b4cf5]'
+                  ? 'bg-[#5b4cf5]/8 text-[#5b4cf5]'
                   : 'text-[#8a7a68] hover:bg-[#f0e9de]/70 hover:text-[#1a1614]'
               } ${collapsed ? 'justify-center' : ''}`}
               title={collapsed ? label : undefined}
@@ -173,7 +173,7 @@ export function DesktopSidebar() {
                 href={href}
                 className={`flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all ${
                   active
-                    ? 'bg-[#5b4cf5]/8 text-[#5b4cf5] shadow-[inset_2px_0_0_#5b4cf5]'
+                    ? 'bg-[#5b4cf5]/8 text-[#5b4cf5]'
                     : 'text-[#b0a090] hover:bg-[#f0e9de]/70 hover:text-[#6b5d4f]'
                 } ${collapsed ? 'justify-center' : ''}`}
                 title={collapsed ? label : undefined}
