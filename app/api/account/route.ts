@@ -35,9 +35,35 @@ function getServerEnv(name: string) {
   return value
 }
 
+function getSupabaseUrl() {
+  return getServerEnv('NEXT_PUBLIC_SUPABASE_URL')
+}
+
+function getServiceRoleKey() {
+  return (
+    getServerEnv('SUPABASE_SERVICE_ROLE_KEY') ??
+    getServerEnv('SUPABASE_SERVICE_KEY') ??
+    getServerEnv('SUPABASE_SERVICE_ROLE')
+  )
+}
+
+function getPublicClient() {
+  const url = getSupabaseUrl()
+  const anonKey = getServerEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+
+  if (!url || !anonKey) return null
+
+  return createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
+
 function getAdminClient() {
-  const url = getServerEnv('NEXT_PUBLIC_SUPABASE_URL')
-  const serviceRoleKey = getServerEnv('SUPABASE_SERVICE_ROLE_KEY')
+  const url = getSupabaseUrl()
+  const serviceRoleKey = getServiceRoleKey()
 
   if (!url || !serviceRoleKey) return null
 
@@ -62,16 +88,18 @@ export async function DELETE(request: Request) {
     return Response.json({ error: 'Missing person id.' }, { status: 400 })
   }
 
+  const publicClient = getPublicClient()
   const admin = getAdminClient()
+  const reader = admin ?? publicClient
 
-  if (!admin) {
+  if (!reader) {
     return Response.json(
-      { error: 'Account deletion needs SUPABASE_SERVICE_ROLE_KEY in .env.local.' },
+      { error: 'Account deletion needs Supabase environment variables on the server.' },
       { status: 500 }
     )
   }
 
-  const { data: person, error: personError } = await admin
+  const { data: person, error: personError } = await reader
     .from('people')
     .select('id, auth_user_id')
     .eq('id', body.personId)
@@ -82,6 +110,13 @@ export async function DELETE(request: Request) {
   }
 
   if (person.auth_user_id) {
+    if (!admin) {
+      return Response.json(
+        { error: 'Signed-in account deletion needs SUPABASE_SERVICE_ROLE_KEY on the server.' },
+        { status: 500 }
+      )
+    }
+
     const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
 
     if (!token) {
@@ -101,7 +136,13 @@ export async function DELETE(request: Request) {
     }
   }
 
-  const { error: deletePersonError } = await admin
+  const writer = admin ?? publicClient
+
+  if (!writer) {
+    return Response.json({ error: 'Could not connect to Supabase.' }, { status: 500 })
+  }
+
+  const { error: deletePersonError } = await writer
     .from('people')
     .delete()
     .eq('id', body.personId)
