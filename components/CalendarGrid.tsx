@@ -103,8 +103,11 @@ function MonthGrid({
 }) {
   const [dragStart, setDragStart] = useState<Date | null>(null)
   const [dragEnd, setDragEnd] = useState<Date | null>(null)
+  const [tapRangeStart, setTapRangeStart] = useState<Date | null>(null)
   const [resizing, setResizing] = useState<ResizeState | null>(null)
   const weekRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const dragPointerId = useRef<number | null>(null)
+  const didDragRange = useRef(false)
 
   const weeks = eachWeekOfInterval({
     start: startOfWeek(startOfMonth(month)),
@@ -112,31 +115,91 @@ function MonthGrid({
   })
 
   // Day drag-select helpers
-  const dragMin = dragStart && dragEnd ? min([dragStart, dragEnd]) : null
-  const dragMax = dragStart && dragEnd ? max([dragStart, dragEnd]) : null
+  const selectionStart = dragStart ?? tapRangeStart
+  const selectionEnd = dragEnd ?? tapRangeStart
+  const dragMin = selectionStart && selectionEnd ? min([selectionStart, selectionEnd]) : null
+  const dragMax = selectionStart && selectionEnd ? max([selectionStart, selectionEnd]) : null
 
   function isDragHighlighted(day: Date) {
     if (!dragMin || !dragMax) return false
     return isWithinInterval(day, { start: dragMin, end: dragMax })
   }
 
-  function handleDayPointerDown(day: Date) {
+  function getPointerDay(e: React.PointerEvent) {
+    const target = document
+      .elementFromPoint(e.clientX, e.clientY)
+      ?.closest<HTMLElement>('[data-calendar-date]')
+    const value = target?.dataset.calendarDate
+    if (value) return parseISO(value)
+
+    for (const [weekKey, row] of weekRefs.current.entries()) {
+      const rect = row.getBoundingClientRect()
+      if (
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom &&
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right
+      ) {
+        const col = Math.min(6, Math.max(0, Math.floor(((e.clientX - rect.left) / rect.width) * 7)))
+        return addDays(parseISO(weekKey), col)
+      }
+    }
+
+    return null
+  }
+
+  function openRange(start: Date, end: Date) {
+    const s = format(min([start, end]), 'yyyy-MM-dd')
+    const e = format(max([start, end]), 'yyyy-MM-dd')
+    setTapRangeStart(null)
+    onRangeSelect(s, e)
+  }
+
+  function handleDayPointerDown(e: React.PointerEvent<HTMLButtonElement>, day: Date) {
+    dragPointerId.current = e.pointerId
+    didDragRange.current = false
+    e.currentTarget.setPointerCapture(e.pointerId)
     setDragStart(day)
     setDragEnd(day)
   }
 
-  function handleDayPointerEnter(day: Date) {
-    if (dragStart) setDragEnd(day)
+  function handleDayPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
+    if (dragPointerId.current !== e.pointerId || !dragStart) return
+    const day = getPointerDay(e)
+    if (!day) return
+    if (!isSameDay(day, dragEnd ?? dragStart)) {
+      didDragRange.current = true
+      setDragEnd(day)
+    }
+    if (e.pointerType !== 'mouse') e.preventDefault()
   }
 
-  function handleDayPointerUp(day: Date) {
-    if (dragStart && dragEnd && !isSameDay(dragStart, dragEnd)) {
-      const s = format(min([dragStart, dragEnd]), 'yyyy-MM-dd')
-      const e = format(max([dragStart, dragEnd]), 'yyyy-MM-dd')
-      onRangeSelect(s, e)
+  function handleDayPointerEnter(day: Date) {
+    if (dragStart && dragPointerId.current === null) setDragEnd(day)
+  }
+
+  function handleDayPointerUp(e: React.PointerEvent<HTMLButtonElement>, day: Date) {
+    const endDay = getPointerDay(e) ?? dragEnd ?? day
+    const isTouchLike = e.pointerType !== 'mouse'
+
+    if (dragStart && !isSameDay(dragStart, endDay)) {
+      openRange(dragStart, endDay)
+    } else if (isTouchLike && !didDragRange.current) {
+      if (tapRangeStart && !isSameDay(tapRangeStart, day)) {
+        openRange(tapRangeStart, day)
+      } else if (tapRangeStart && isSameDay(tapRangeStart, day)) {
+        setTapRangeStart(null)
+        onDayClick(day)
+      } else {
+        setTapRangeStart(day)
+      }
     } else {
+      setTapRangeStart(null)
       onDayClick(day)
     }
+
+    dragPointerId.current = null
+    didDragRange.current = false
     setDragStart(null)
     setDragEnd(null)
   }
@@ -239,9 +302,17 @@ function MonthGrid({
                   return (
                     <button
                       key={day.toISOString()}
-                      onPointerDown={() => handleDayPointerDown(day)}
+                      data-calendar-date={format(day, 'yyyy-MM-dd')}
+                      onPointerDown={(e) => handleDayPointerDown(e, day)}
+                      onPointerMove={handleDayPointerMove}
                       onPointerEnter={() => handleDayPointerEnter(day)}
-                      onPointerUp={() => handleDayPointerUp(day)}
+                      onPointerUp={(e) => handleDayPointerUp(e, day)}
+                      onPointerCancel={() => {
+                        dragPointerId.current = null
+                        didDragRange.current = false
+                        setDragStart(null)
+                        setDragEnd(null)
+                      }}
                       className={`border-r border-[#ede8e0] last:border-r-0 text-left transition-all duration-100 select-none active:scale-[0.97] ${
                         highlighted
                           ? 'bg-[#5b4cf5]/10'
@@ -249,7 +320,7 @@ function MonthGrid({
                             ? 'opacity-30 hover:bg-[#f3efe8]/60'
                             : 'hover:bg-[#f3efe8]/60 active:bg-[#ede8e0]'
                       }`}
-                      style={{ minHeight: compact ? 70 : 88, padding: '3px 3px 2px 3px' }}
+                      style={{ minHeight: compact ? 70 : 88, padding: '3px 3px 2px 3px', touchAction: 'none' }}
                     >
                       <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${
                         today ? 'bg-[#5b4cf5] text-white' : 'text-[#1a1614]'
