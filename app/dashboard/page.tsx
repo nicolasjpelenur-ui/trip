@@ -26,13 +26,15 @@ import {
   Map,
   MessageSquare,
   Plus,
+  UserPlus,
+  X,
 } from 'lucide-react'
 import { NavBar } from '@/components/NavBar'
-import { RealtimeProvider } from '@/components/RealtimeProvider'
+import { RealtimeProvider, useTripContext } from '@/components/RealtimeProvider'
 import { EventSummaryCard } from '@/components/EventSummaryCard'
 import { PersonAvatar } from '@/components/PersonChip'
 import { GroupWithMembers, getGroupWithMembers, getGroups, getMessages } from '@/lib/chatQueries'
-import { getAllEvents, getPeople } from '@/lib/queries'
+import { getAllEvents, getPeople, upsertEventParticipant, logActivity } from '@/lib/queries'
 import { EventWithDetails, ItineraryDayWithItems, Person } from '@/lib/supabase'
 import { getPollsForEvent, getPollsForGroup, Poll } from '@/lib/pollQueries'
 import { getEventItinerary } from '@/lib/itineraryQueries'
@@ -162,14 +164,60 @@ function ItineraryWidget({ nextEvent, nextItinerary }: { nextEvent: EventWithDet
   )
 }
 
+function CountdownBanner({ event }: { event: EventWithDetails }) {
+  const dismissKey = `countdown_dismissed_${event.id}`
+  const [dismissed, setDismissed] = useState(false)
+  useEffect(() => { if (localStorage.getItem(dismissKey)) setDismissed(true) }, [dismissKey])
+  if (dismissed) return null
+  const days = differenceInCalendarDays(parseISO(event.start_date), new Date())
+  const label = days === 0 ? 'starts today!' : `starts in ${days} day${days === 1 ? '' : 's'}!`
+  return (
+    <div className="relative rounded-2xl bg-gradient-to-r from-[#5b4cf5] to-[#7c6cf7] text-white px-5 py-4 flex items-center gap-4">
+      <span className="relative flex-shrink-0">
+        <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-white opacity-40" />
+        <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm truncate">{event.title} {label}</p>
+        <p className="text-xs text-white/70 mt-0.5">{format(parseISO(event.start_date), 'EEEE, MMM d')} · {event.location.name}</p>
+      </div>
+      <Link href={`/events/${event.id}`} className="flex-shrink-0 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-xl px-3 py-1.5 transition-colors">
+        View →
+      </Link>
+      <button
+        onClick={() => { localStorage.setItem(dismissKey, '1'); setDismissed(true) }}
+        className="text-white/60 hover:text-white"
+        aria-label="Dismiss"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )
+}
+
 function DashboardContent() {
   const router = useRouter()
+  const { onlinePersonIds, people: allPeople } = useTripContext()
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
   const [events, setEvents] = useState<EventWithDetails[]>([])
   const [chatPreviews, setChatPreviews] = useState<ChatPreview[]>([])
   const [pendingPolls, setPendingPolls] = useState<PendingPoll[]>([])
   const [nextItinerary, setNextItinerary] = useState<ItineraryDayWithItems[]>([])
   const [loading, setLoading] = useState(true)
+  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
+
+  async function handleQuickJoin(event: EventWithDetails) {
+    if (!currentPerson) return
+    setJoinedIds((prev) => new Set([...prev, event.id]))
+    try {
+      await upsertEventParticipant(event.id, currentPerson.id, {
+        staying_at_apartment: false, arrival_date: null, departure_date: null,
+      })
+      logActivity(currentPerson.id, 'joined_event', event.title, 'event', event.id)
+    } catch {
+      setJoinedIds((prev) => { const s = new Set(prev); s.delete(event.id); return s })
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -260,6 +308,16 @@ function DashboardContent() {
   const t = today()
   const nextEvent = events.filter(isUpcoming)[0]
   const monthEvents = events.filter((e) => parseISO(e.start_date) <= endOfMonth(t) && parseISO(e.end_date) >= startOfMonth(t))
+  const onlineOthers = allPeople.filter((p) => onlinePersonIds.has(p.id) && p.id !== currentPerson?.id)
+  const bannerEvent = currentPerson
+    ? events
+        .filter(isUpcoming)
+        .filter((e) => e.participants.some((p) => p.person_id === currentPerson.id))
+        .find((e) => {
+          const d = differenceInCalendarDays(parseISO(e.start_date), new Date())
+          return d >= 0 && d <= 7
+        }) ?? null
+    : null
 
   if (loading) {
     return (
@@ -277,6 +335,27 @@ function DashboardContent() {
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+      {bannerEvent && <CountdownBanner event={bannerEvent} />}
+
+      {onlineOthers.length > 0 && (
+        <div className="flex items-center gap-2.5 px-1">
+          <span className="relative flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-60" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+          </span>
+          <span className="text-xs text-[#9c8b75] font-medium">Online now</span>
+          <div className="flex items-center gap-1">
+            {onlineOthers.slice(0, 8).map((p) => (
+              <div key={p.id} className="relative" title={p.name}>
+                <PersonAvatar person={p} size="sm" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-400 border-2 border-white" />
+              </div>
+            ))}
+            {onlineOthers.length > 8 && <span className="text-[10px] text-[#9c8b75]">+{onlineOthers.length - 8}</span>}
+          </div>
+        </div>
+      )}
+
       <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <PersonAvatar person={currentPerson} size="lg" />
@@ -337,9 +416,23 @@ function DashboardContent() {
               <p className="text-sm text-[#9c8b75] py-4">Nothing scheduled this month.</p>
             ) : (
               <div className="space-y-2">
-                {monthEvents.slice(0, 4).map((event) => (
-                  <EventSummaryCard key={event.id} event={event} compact href={`/events/${event.id}`} />
-                ))}
+                {monthEvents.slice(0, 4).map((event) => {
+                  const isParticipant = event.participants.some((p) => p.person_id === currentPerson?.id)
+                    || joinedIds.has(event.id)
+                  return (
+                    <div key={event.id} className="relative">
+                      <EventSummaryCard event={event} compact href={`/events/${event.id}`} />
+                      {!isParticipant && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); void handleQuickJoin(event) }}
+                          className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-[#5b4cf5] px-2 py-1 rounded-full hover:bg-[#4a3dd4] transition-all active:scale-95"
+                        >
+                          <UserPlus className="w-2.5 h-2.5" /> Join
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

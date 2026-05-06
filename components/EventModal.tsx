@@ -11,7 +11,7 @@ import { EventComments } from './EventComments'
 import { EventForm } from './EventForm'
 import { EventSummaryCard } from './EventSummaryCard'
 import { PersonAvatar } from './PersonChip'
-import { ArrowLeft, CalendarDays, Home, Pencil, Plus, Trash2, UserPlus, UserMinus } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, Home, Pencil, Plus, Trash2, UserPlus, UserMinus } from 'lucide-react'
 
 interface EventModalProps {
   date: Date | null
@@ -295,6 +295,17 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                       >
                         <EventSummaryCard event={event} />
                       </button>
+
+                      {currentPerson && (
+                        <div className={`mx-3.5 mt-1.5 mb-1 inline-flex items-center gap-1 text-[10px] font-semibold rounded-full px-2.5 py-0.5 ${
+                          isParticipant ? 'text-green-700 bg-green-50' : 'text-[#9c8b75] bg-[#f3efe8]'
+                        }`}>
+                          {isParticipant
+                            ? <><Check className="w-3 h-3" /> You're going</>
+                            : <><span className="w-1.5 h-1.5 rounded-full bg-[#c9b99f]" /> Not joined</>
+                          }
+                        </div>
+                      )}
 
                       {/* Participant dates breakdown (when any differ from event dates) */}
                       {expanded && <ParticipantList event={event} />}

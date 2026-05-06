@@ -242,7 +242,7 @@ export async function logActivity(
   })
 }
 
-const CHAT_ACTIONS = ['sent_message', 'added_reaction', 'sent_dm']
+const CHAT_ACTIONS = ['added_reaction', 'sent_dm']
 
 export async function getActivityLog(currentPersonId: string | null, limit = 60): Promise<ActivityLog[]> {
   // Collect event IDs the current user participates in

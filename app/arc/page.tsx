@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { NavBar } from '@/components/NavBar'
 import { RealtimeProvider } from '@/components/RealtimeProvider'
 import { getAllEvents, getPeople } from '@/lib/queries'
 import { Person, EventWithDetails } from '@/lib/supabase'
+import { BarChart2 } from 'lucide-react'
 import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
 import { parseISO, format, eachMonthOfInterval, startOfMonth, endOfMonth,
   differenceInCalendarDays, isToday, addDays } from 'date-fns'
@@ -44,7 +46,11 @@ function ArcContent() {
 
   useEffect(() => {
     if (!loading) {
-      setTimeout(() => todayRef.current?.scrollIntoView({ inline: 'center', behavior: 'smooth' }), 100)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          todayRef.current?.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' })
+        })
+      })
     }
   }, [loading])
 
@@ -61,8 +67,12 @@ function ArcContent() {
 
   if (events.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-6 text-center py-16">
-        <p className="text-[#9c8b75]">No events yet — add some from the calendar.</p>
+      <div className="max-w-4xl mx-auto px-4 py-6 text-center flex flex-col items-center gap-3 py-20">
+        <BarChart2 className="w-10 h-10 text-[#c9b99f]" />
+        <p className="text-sm text-[#9c8b75]">No events yet — create some to see the arc.</p>
+        <Link href="/events/new" className="text-xs font-medium text-[#5b4cf5] hover:underline">
+          Create first event →
+        </Link>
       </div>
     )
   }
@@ -93,6 +103,7 @@ function ArcContent() {
         <div>
           <h1 className="text-sm font-semibold text-[#1a1614]">Trip Arc</h1>
           <p className="text-xs text-[#9c8b75]">{format(minDate, 'MMM d')} – {format(maxDate, 'MMM d, yyyy')}</p>
+          <p className="text-[10px] text-[#c9b99f] mt-0.5">Each row = a person · Each bar = a trip · Purple line = today</p>
         </div>
         <button
           onClick={() => setColorMode((m) => m === 'person' ? 'location' : 'person')}

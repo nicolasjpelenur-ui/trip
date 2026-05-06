@@ -9,7 +9,7 @@ import { ActivityLog } from '@/lib/supabase'
 import { getActivityLog } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { formatDistanceToNow, parseISO } from 'date-fns'
-import { Activity } from 'lucide-react'
+import { Activity, MessageSquare } from 'lucide-react'
 
 const ACTION_LABELS: Record<string, string> = {
   created_event: 'created an event',
@@ -95,7 +95,14 @@ function ActivityContent() {
                 )}
                 <div className="flex items-start gap-3 py-2.5">
                   {entry.person ? (
-                    <PersonAvatar person={entry.person} size="sm" />
+                    <div className="relative flex-shrink-0">
+                      <PersonAvatar person={entry.person} size="sm" />
+                      {entry.action === 'sent_message' && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#5b4cf5] flex items-center justify-center">
+                          <MessageSquare className="w-2 h-2 text-white" />
+                        </span>
+                      )}
+                    </div>
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-[#f3efe8] flex items-center justify-center flex-shrink-0">
                       <Activity className="w-3.5 h-3.5 text-[#9c8b75]" />

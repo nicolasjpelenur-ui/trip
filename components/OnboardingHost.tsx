@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   BarChart2, CalendarDays, Check, ChevronLeft, ChevronRight,
-  LayoutDashboard, Map, MessageSquare, Users,
+  LayoutDashboard, Map, MessageSquare, Plus, Sparkles, Users,
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Person } from '@/lib/supabase'
@@ -20,6 +20,14 @@ export function openOnboarding() {
 }
 
 const slides = [
+  {
+    key: 'Welcome',
+    title: 'Welcome!',
+    body: 'This is your shared trip planner. Plan trips, track who\'s joining, chat with the group, and keep everyone on the same page — all in one place.',
+    tip: 'This guide takes about 1 minute to read through.',
+    Icon: Sparkles,
+    href: '/dashboard',
+  },
   {
     key: 'Dashboard',
     title: 'Your Home Screen',
@@ -105,6 +113,11 @@ export function OnboardingHost() {
         setManual(false)
         setIndex(0)
         setOpen(true)
+        // Mark seen immediately so dismissing with ✕ still counts as seen
+        try {
+          const completedAt = await completePersonOnboarding(currentPerson.id)
+          if (!cancelled) setPerson({ ...currentPerson, onboarding_completed_at: completedAt })
+        } catch { /* non-fatal */ }
       }
     }
     queueMicrotask(loadPerson)
@@ -127,6 +140,9 @@ export function OnboardingHost() {
   const slide = slides[index]
   const Icon = slide.Icon
   const isLast = index === slides.length - 1
+  const displayTitle = slide.key === 'Welcome' && person
+    ? `Welcome, ${person.name.split(' ')[0]}!`
+    : slide.title
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -138,7 +154,7 @@ export function OnboardingHost() {
 
           {/* Progress dots */}
           <div className="flex items-center justify-between mb-6">
-            <span className="text-xs font-medium text-[#9c8b75]">{index + 1} of {slides.length}</span>
+            <span className="text-xs font-medium text-[#9c8b75]">Step {index + 1} of {slides.length}</span>
             <div className="flex gap-1.5">
               {slides.map((item, i) => (
                 <button
@@ -156,17 +172,23 @@ export function OnboardingHost() {
             <div className="w-16 h-16 rounded-2xl bg-[#5b4cf5]/10 flex items-center justify-center mb-5">
               <Icon className="w-8 h-8 text-[#5b4cf5]" />
             </div>
-            <h2 className="text-xl font-bold text-[#1a1614] leading-snug">{slide.title}</h2>
+            <h2 className="text-xl font-bold text-[#1a1614] leading-snug">{displayTitle}</h2>
             <p className="text-sm text-[#6b5d4f] mt-3 leading-relaxed max-w-xs">{slide.body}</p>
             {slide.tip && (
-              <p className="mt-3 text-xs text-[#9c8b75] bg-[#f3efe8] rounded-lg px-3 py-1.5 inline-block">
+              <p className="mt-3 text-xs text-[#5b4cf5] bg-[#5b4cf5]/10 border border-[#5b4cf5]/20 rounded-xl px-3 py-1.5 inline-block font-medium">
                 💡 {slide.tip}
               </p>
             )}
             {isLast && (
-              <Link href="/dashboard" className="text-xs text-[#5b4cf5] font-medium mt-4 hover:underline">
-                Open dashboard →
-              </Link>
+              <div className="mt-4 flex flex-col items-center gap-2.5">
+                <p className="text-sm font-semibold text-[#1a1614]">You're all set! 🎉</p>
+                <Link
+                  href="/events/new"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#e8724a] px-4 py-2 rounded-xl hover:bg-[#d4663f] transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Create your first event
+                </Link>
+              </div>
             )}
           </div>
 

@@ -14,8 +14,9 @@ import { EventComments } from '@/components/EventComments'
 import { EventSummaryCard } from '@/components/EventSummaryCard'
 import { ItineraryPlanner } from '@/components/ItineraryPlanner'
 import { PersonAvatar } from '@/components/PersonChip'
-import { EventWithDetails, Person } from '@/lib/supabase'
+import { EventWithDetails, ItineraryDayWithItems, Person } from '@/lib/supabase'
 import { getEvent, getPeople, logActivity, upsertEventParticipant, removeEventParticipant } from '@/lib/queries'
+import { getEventItinerary } from '@/lib/itineraryQueries'
 import { canSeeEvent, canEditEvent } from '@/lib/eventUtils'
 
 /** Banner shown when the logged-in user is not yet a participant */
@@ -183,10 +184,34 @@ function ParticipantRoster({ event }: { event: EventWithDetails }) {
   )
 }
 
+function PlanningReadinessBar({ itinerary, eventId }: { itinerary: ItineraryDayWithItems[]; eventId: string }) {
+  if (itinerary.length === 0) return null
+  const planned = itinerary.filter((d) => d.items.length > 0).length
+  const total = itinerary.length
+  const pct = Math.round((planned / total) * 100)
+  return (
+    <div className="rounded-xl border border-[#ede8e0] bg-white px-4 py-3 mb-3" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-semibold text-[#1a1614]">
+          {planned} of {total} day{total !== 1 ? 's' : ''} planned
+        </span>
+        {pct === 100
+          ? <span className="text-[10px] font-medium text-green-600">All days planned ✓</span>
+          : <Link href={`/events/${eventId}`} className="text-[10px] font-medium text-[#5b4cf5] hover:underline">Add plans →</Link>
+        }
+      </div>
+      <div className="h-1.5 rounded-full bg-[#ede8e0] overflow-hidden">
+        <div className="h-full rounded-full bg-[#5b4cf5] transition-all duration-500" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 function EventDetailContent({ id }: { id: string }) {
   const router = useRouter()
   const [event, setEvent] = useState<EventWithDetails | null>(null)
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
+  const [itinerary, setItinerary] = useState<ItineraryDayWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [leaving, setLeaving] = useState(false)
 
@@ -196,6 +221,9 @@ function EventDetailContent({ id }: { id: string }) {
     setEvent(loadedEvent)
     setCurrentPerson(people.find((p) => p.id === personId) ?? null)
     setLoading(false)
+    if (loadedEvent) {
+      try { setItinerary(await getEventItinerary(loadedEvent)) } catch { /* non-fatal */ }
+    }
   }
 
   useEffect(() => {
@@ -329,6 +357,7 @@ function EventDetailContent({ id }: { id: string }) {
               <p className="text-sm text-[#9c8b75]">Plan each day with activities, places, and flexible timing.</p>
             </div>
           </div>
+          <PlanningReadinessBar itinerary={itinerary} eventId={event.id} />
           <ItineraryPlanner event={event} canEdit={canEdit} currentPersonId={currentPersonId} />
         </div>
       </section>
