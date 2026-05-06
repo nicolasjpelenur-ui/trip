@@ -84,11 +84,11 @@ function MiniCalendar({ events }: { events: EventWithDetails[] }) {
             <Link
               key={day.toISOString()}
               href="/calendar"
-              className={`min-h-10 rounded-lg border text-xs flex flex-col items-center justify-center transition-colors ${
+              className={`min-h-11 rounded-lg border text-xs flex flex-col items-center justify-center transition-all active:scale-95 ${
                 isToday(day)
                   ? 'border-[#5b4cf5] bg-[#5b4cf5]/10 text-[#5b4cf5]'
                   : isSameMonth(day, month)
-                    ? 'border-[#ede8e0] text-[#1a1614] hover:bg-[#f3efe8]'
+                    ? 'border-[#ede8e0] text-[#1a1614] hover:bg-[#f3efe8] hover:border-[#5b4cf5]/20'
                     : 'border-transparent text-[#c9b99f]'
               }`}
             >
@@ -264,9 +264,9 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
         <div className="skeleton h-10 w-52 rounded-xl" />
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
           <div className="skeleton h-64 rounded-xl" />
           <div className="skeleton h-64 rounded-xl" />
         </div>
@@ -277,7 +277,7 @@ function DashboardContent() {
   if (!currentPerson) return null
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+    <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
       <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <PersonAvatar person={currentPerson} size="lg" />
@@ -292,22 +292,22 @@ function DashboardContent() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/calendar" className="inline-flex items-center gap-1.5 rounded-xl bg-[#5b4cf5] text-white px-3 py-2 text-sm font-medium hover:bg-[#4a3dd4]">
+          <Link href="/calendar" className="inline-flex items-center gap-1.5 rounded-xl bg-[#5b4cf5] text-white px-3 py-2 text-sm font-medium hover:bg-[#4a3dd4] active:scale-[0.97] transition-all">
             <CalendarDays className="w-4 h-4" />
             Calendar
           </Link>
-          <Link href="/events/new" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8]">
+          <Link href="/events/new" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8] active:scale-[0.97] transition-all">
             <Plus className="w-4 h-4" />
             New event
           </Link>
-          <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8]">
+          <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8] active:scale-[0.97] transition-all">
             <MessageSquare className="w-4 h-4" />
             Chat
           </Link>
         </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <section className="grid gap-5 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-4">
           {nextEvent ? (
             <div>
@@ -349,7 +349,7 @@ function DashboardContent() {
         <MiniCalendar events={monthEvents} />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
+      <section className="grid gap-5 lg:grid-cols-3">
         <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-[#1a1614]">Chats</h2>
@@ -360,7 +360,7 @@ function DashboardContent() {
           ) : (
             <div className="space-y-2">
               {chatPreviews.slice(0, 4).map((preview) => (
-                <Link key={preview.group.id} href={`/chat/${preview.group.id}`} className="flex items-center gap-3 rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] transition-colors">
+                <Link key={preview.group.id} href={`/chat/${preview.group.id}`} className="flex items-center gap-3 rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] hover:border-[#5b4cf5]/20 transition-all active:scale-[0.98]">
                   <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${preview.group.color}1f` }}>
                     <MessageSquare className="w-4 h-4" style={{ color: preview.group.color }} />
                   </span>
@@ -388,7 +388,7 @@ function DashboardContent() {
           ) : (
             <div className="space-y-2">
               {pendingPolls.map(({ poll, sourceTitle, href }) => (
-                <Link key={poll.id} href={href} className="block rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] transition-colors">
+                <Link key={poll.id} href={href} className="block rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] hover:border-[#5b4cf5]/20 transition-all active:scale-[0.98]">
                   <p className="text-sm font-medium text-[#1a1614] line-clamp-2">{poll.question}</p>
                   <p className="text-xs text-[#9c8b75] mt-1">{sourceTitle} · {poll.options.length} options</p>
                 </Link>

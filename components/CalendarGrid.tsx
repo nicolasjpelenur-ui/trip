@@ -12,6 +12,7 @@ import { EventModal } from './EventModal'
 import { useTripContext } from './RealtimeProvider'
 import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
 import { updateEventDates } from '@/lib/queries'
+import { canSeeEvent } from '@/lib/eventUtils'
 import { Users, MapPin, ChevronDown } from 'lucide-react'
 
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -241,7 +242,7 @@ function MonthGrid({
                       onPointerDown={() => handleDayPointerDown(day)}
                       onPointerEnter={() => handleDayPointerEnter(day)}
                       onPointerUp={() => handleDayPointerUp(day)}
-                      className={`border-r border-[#ede8e0] last:border-r-0 text-left transition-colors select-none ${
+                      className={`border-r border-[#ede8e0] last:border-r-0 text-left transition-all duration-100 select-none active:scale-[0.97] ${
                         highlighted
                           ? 'bg-[#5b4cf5]/10'
                           : !inMonth
@@ -284,7 +285,7 @@ function MonthGrid({
                   return (
                     <div
                       key={`${event.id}-${rowKey}`}
-                      className={`absolute pointer-events-auto cursor-pointer hover:brightness-90 transition-all ${isBeingResized ? '' : 'animate-bar'}`}
+                      className={`absolute pointer-events-auto cursor-pointer hover:brightness-90 hover:scale-y-110 transition-all duration-100 ${isBeingResized ? '' : 'animate-bar'}`}
                       style={{
                         left: `calc(${(colStart / 7) * 100}% + ${startsHere ? PAD : 0}px)`,
                         width: `calc(${(colSpan / 7) * 100}% - ${(startsHere ? PAD : 0) + (endsHere ? PAD : 0)}px)`,
@@ -373,15 +374,7 @@ export function CalendarGrid() {
 
   const filteredEvents = events
     .filter((e) => {
-      // Visibility: restricted events only show to allowed people
-      const vis = e.visibility ?? 'all'
-      if (vis !== 'all') {
-        const canSee =
-          (e.viewers ?? []).some((v) => v.person_id === currentPersonId) ||
-          e.participants.some((p) => p.person_id === currentPersonId) ||
-          e.created_by === currentPersonId
-        if (!canSee) return false
-      }
+      if (!canSeeEvent(e, currentPersonId)) return false
       // Person filter: hide only if the event *has* participants but none are active
       if (e.participants.length > 0 && !e.participants.some((p) => activeIds.has(p.person_id))) return false
       return true

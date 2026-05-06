@@ -22,7 +22,9 @@ export default function RootLayout({
         <DesktopSidebar />
         <OnboardingHost />
         <div className="page-content min-h-screen">
-          {children}
+          <div className="page-enter">
+            {children}
+          </div>
         </div>
       </body>
     </html>

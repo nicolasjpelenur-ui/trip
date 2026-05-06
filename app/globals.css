@@ -173,6 +173,15 @@
   border-radius: 6px;
 }
 
+/* ── Page enter animation ── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageEnter 0.22s cubic-bezier(0.22,1,0.36,1) both;
+}
+
 /* ── Desktop sidebar layout ── */
 @media (min-width: 768px) {
   .page-content {
@@ -181,6 +190,13 @@
   }
   html.sidebar-collapsed .page-content {
     padding-left: 56px;
+  }
+}
+
+/* ── Mobile bottom tab bar ── */
+@media (max-width: 767px) {
+  .page-content {
+    padding-bottom: 64px;
   }
 }
 

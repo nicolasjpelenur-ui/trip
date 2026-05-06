@@ -11,15 +11,18 @@ import {
   Users, UserRound, ChevronLeft, ChevronRight, Plus, LogOut, LayoutDashboard, Map,
 } from 'lucide-react'
 
-const NAV_ITEMS = [
+const PRIMARY_NAV = [
   { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/calendar', label: 'Calendar', Icon: CalendarDays },
   { href: '/itinerary', label: 'Itinerary', Icon: Map },
   { href: '/chat', label: 'Chat', Icon: MessageSquare },
+  { href: '/people', label: 'People', Icon: Users },
+]
+
+const SECONDARY_NAV = [
+  { href: '/profile', label: 'Profile', Icon: UserRound },
   { href: '/arc', label: 'Arc', Icon: GitBranch },
   { href: '/activity', label: 'Activity', Icon: Activity },
-  { href: '/profile', label: 'Profile', Icon: UserRound },
-  { href: '/people', label: 'People', Icon: Users },
 ]
 
 export function DesktopSidebar() {
@@ -121,7 +124,7 @@ export function DesktopSidebar() {
 
       {/* Nav links */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {NAV_ITEMS.map(({ href, label, Icon }) => {
+        {PRIMARY_NAV.map(({ href, label, Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           const isChat = href === '/chat'
           return (
@@ -146,12 +149,32 @@ export function DesktopSidebar() {
 
         <Link
           href="/events/new"
-          className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium bg-[#5b4cf5] text-white hover:bg-[#4a3dd4] transition-colors mt-2 ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium bg-[#5b4cf5] text-white hover:bg-[#4a3dd4] active:scale-[0.98] transition-all mt-2 ${collapsed ? 'justify-center' : ''}`}
           title={collapsed ? '+ Event' : undefined}
         >
           <Plus className="w-4 h-4 flex-shrink-0" />
           {!collapsed && 'New Event'}
         </Link>
+
+        {/* Secondary nav — less-used sections */}
+        <div className={`pt-2 mt-1 border-t border-[#ede8e0] space-y-0.5`}>
+          {SECONDARY_NAV.map(({ href, label, Icon }) => {
+            const active = pathname === href || pathname.startsWith(href + '/')
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  active ? 'bg-[#5b4cf5]/10 text-[#5b4cf5]' : 'text-[#c9b99f] hover:bg-[#f3efe8] hover:text-[#6b5d4f]'
+                } ${collapsed ? 'justify-center' : ''}`}
+                title={collapsed ? label : undefined}
+              >
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                {!collapsed && label}
+              </Link>
+            )
+          })}
+        </div>
       </nav>
 
       {/* User + sign-out + collapse */}

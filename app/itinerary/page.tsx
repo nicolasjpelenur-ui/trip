@@ -56,7 +56,7 @@ function ItineraryCard({ event, currentPersonId }: { event: EventWithDetails; cu
   const highlightDay = todayDay ?? days?.[0]
 
   return (
-    <div className="bg-white border border-[#ede8e0] rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 6px rgba(100,60,10,0.08)' }}>
+    <div className="bg-white border border-[#ede8e0] rounded-2xl overflow-hidden transition-all duration-150 hover:border-[#5b4cf5]/30 hover:-translate-y-0.5 hover:shadow-md" style={{ boxShadow: '0 1px 6px rgba(100,60,10,0.08)' }}>
       {/* Colour strip */}
       <div className="h-1.5" style={{ backgroundColor: color }} />
 
@@ -199,7 +199,7 @@ function ItineraryContent() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-3">
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-3">
         {[1, 2, 3].map((i) => <div key={i} className="h-32 rounded-2xl skeleton" />)}
       </div>
     )
@@ -212,7 +212,7 @@ function ItineraryContent() {
   const past = myEvents.filter((e) => parseISO(e.end_date) < t)
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-6">
+    <main className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex items-center gap-3 mb-6">
         <span className="w-10 h-10 rounded-xl bg-[#fdf0ea] flex items-center justify-center">
           <Map className="w-5 h-5 text-[#e8724a]" />
@@ -235,20 +235,26 @@ function ItineraryContent() {
       ) : (
         <div className="space-y-4">
           {upcoming.length > 0 && (
-            <>
-              <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider">Upcoming & in progress</h2>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider whitespace-nowrap">Upcoming & in progress</h2>
+                <div className="flex-1 h-px bg-[#ede8e0]" />
+              </div>
               {upcoming.map((event) => (
                 <ItineraryCard key={event.id} event={event} currentPersonId={currentPerson.id} />
               ))}
-            </>
+            </div>
           )}
           {past.length > 0 && (
-            <>
-              <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider mt-2">Past events</h2>
+            <div className="space-y-3 mt-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider whitespace-nowrap">Past events</h2>
+                <div className="flex-1 h-px bg-[#ede8e0]" />
+              </div>
               {past.map((event) => (
                 <ItineraryCard key={event.id} event={event} currentPersonId={currentPerson.id} />
               ))}
-            </>
+            </div>
           )}
         </div>
       )}

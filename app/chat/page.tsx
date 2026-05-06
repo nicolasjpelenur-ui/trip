@@ -105,7 +105,7 @@ function ChatContent() {
   const otherPeople = allPeople.filter((p) => p.id !== currentPersonId)
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 py-6">
 
       {/* Direct Messages */}
       <div className="mb-6">
@@ -132,7 +132,7 @@ function ChatContent() {
                   key={person.id}
                   onClick={() => handleOpenDm(person.id)}
                   disabled={dmLoading === person.id}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3efe8] transition-colors text-left ${i > 0 ? 'border-t border-[#ede8e0]' : ''}`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3efe8] transition-all active:scale-[0.99] text-left ${i > 0 ? 'border-t border-[#ede8e0]' : ''}`}
                 >
                   <PersonAvatar person={person} size="md" />
                   <div className="flex-1 min-w-0">

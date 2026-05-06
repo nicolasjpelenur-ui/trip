@@ -22,7 +22,7 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
   const stayingCount = event.participants.filter((p) => p.staying_at_apartment).length
   const content = (
     <div
-      className={`group bg-white border border-[#ede8e0] rounded-xl overflow-hidden text-left transition-all ${href ? 'hover:border-[#5b4cf5]/40 hover:shadow-md' : ''}`}
+      className={`group bg-white border border-[#ede8e0] rounded-xl overflow-hidden text-left transition-all duration-150 ${href ? 'hover:border-[#5b4cf5]/30 hover:-translate-y-0.5 hover:shadow-lg' : ''}`}
       style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}
     >
       <div className="h-1" style={{ backgroundColor: locationColor }} />
