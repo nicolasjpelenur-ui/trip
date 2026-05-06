@@ -16,21 +16,7 @@ import { ItineraryPlanner } from '@/components/ItineraryPlanner'
 import { PersonAvatar } from '@/components/PersonChip'
 import { EventWithDetails, Person } from '@/lib/supabase'
 import { getEvent, getPeople, logActivity, upsertEventParticipant, removeEventParticipant } from '@/lib/queries'
-
-function canSeeEvent(event: EventWithDetails, personId: string | null) {
-  if ((event.visibility ?? 'all') === 'all') return true
-  if (!personId) return false
-  return (
-    event.created_by === personId ||
-    event.participants.some((p) => p.person_id === personId) ||
-    (event.viewers ?? []).some((v) => v.person_id === personId)
-  )
-}
-
-function canEditEvent(event: EventWithDetails, personId: string | null) {
-  if (!personId) return false
-  return event.created_by === personId || event.participants.some((p) => p.person_id === personId)
-}
+import { canSeeEvent, canEditEvent } from '@/lib/eventUtils'
 
 /** Banner shown when the logged-in user is not yet a participant */
 function JoinBanner({

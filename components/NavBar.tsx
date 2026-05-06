@@ -110,7 +110,7 @@ export function NavBar() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95 ${
+                className={`relative flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95 ${
                   active ? 'text-[#5b4cf5]' : 'text-[#9c8b75]'
                 }`}
               >

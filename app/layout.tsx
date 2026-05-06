@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { OnboardingHost } from "@/components/OnboardingHost";
+import { PageTransition } from "@/components/PageTransition";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -22,9 +23,7 @@ export default function RootLayout({
         <DesktopSidebar />
         <OnboardingHost />
         <div className="page-content min-h-screen">
-          <div className="page-enter">
-            {children}
-          </div>
+          <PageTransition>{children}</PageTransition>
         </div>
       </body>
     </html>

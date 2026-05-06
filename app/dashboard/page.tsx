@@ -33,10 +33,9 @@ import { EventSummaryCard } from '@/components/EventSummaryCard'
 import { PersonAvatar } from '@/components/PersonChip'
 import { GroupWithMembers, getGroupWithMembers, getGroups, getMessages } from '@/lib/chatQueries'
 import { getAllEvents, getPeople } from '@/lib/queries'
-import { EventWithDetails, Person } from '@/lib/supabase'
+import { EventWithDetails, ItineraryDayWithItems, Person } from '@/lib/supabase'
 import { getPollsForEvent, getPollsForGroup, Poll } from '@/lib/pollQueries'
 import { getEventItinerary } from '@/lib/itineraryQueries'
-import { ItineraryDayWithItems } from '@/lib/supabase'
 import { canEditEvent, canSeeEvent, eventCountdownLabel, isUpcoming, today } from '@/lib/eventUtils'
 
 type ChatPreview = {
