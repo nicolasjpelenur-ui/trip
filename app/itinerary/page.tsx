@@ -219,7 +219,7 @@ function ItineraryContent() {
         </span>
         <div>
           <h1 className="text-2xl font-bold text-[#1a1614] font-display">My Itineraries</h1>
-          <p className="text-sm text-[#9c8b75]">Events you're part of — tap to see the day-by-day plan</p>
+          <p className="text-sm text-[#9c8b75]">Events you are part of — tap to see the day-by-day plan</p>
         </div>
       </div>
 

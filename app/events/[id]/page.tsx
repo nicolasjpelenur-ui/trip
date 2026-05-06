@@ -61,9 +61,9 @@ function JoinBanner({
           <UserPlus className="w-4 h-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#1a1614]">You're not part of this event yet</p>
+          <p className="text-sm font-semibold text-[#1a1614]">You are not part of this event yet</p>
           <p className="text-xs text-[#9c8b75] mt-0.5">
-            The event runs {totalDays} day{totalDays !== 1 ? 's' : ''} — you can join for the full stay or just the days you'll be there.
+            The event runs {totalDays} day{totalDays !== 1 ? 's' : ''} — you can join for the full stay or just the days you will be there.
           </p>
         </div>
       </div>
@@ -84,7 +84,7 @@ function JoinBanner({
             className="flex items-center gap-1.5 text-sm font-medium text-[#5b4cf5] px-4 py-2 rounded-xl border border-[#5b4cf5]/30 hover:bg-[#5b4cf5]/8 transition-colors"
           >
             <CalendarDays className="w-4 h-4" />
-            I'm joining for different dates
+            I am joining for different dates
           </button>
         </div>
       ) : (
@@ -114,7 +114,7 @@ function JoinBanner({
 
           {isPartial && (
             <p className="text-xs text-[#5b4cf5] bg-[#5b4cf5]/8 rounded-lg px-2.5 py-1.5">
-              You'll be there for {customDays} day{customDays !== 1 ? 's' : ''} out of {totalDays}. The calendar bar will extend to cover your dates.
+              You will be there for {customDays} day{customDays !== 1 ? 's' : ''} out of {totalDays}. The calendar bar will extend to cover your dates.
             </p>
           )}
 
@@ -127,7 +127,7 @@ function JoinBanner({
             />
             <span className="text-sm text-[#6b5d4f] flex items-center gap-1.5">
               <Home className="w-3.5 h-3.5 text-[#e8724a]" />
-              I'll be staying at the apartment
+              I will be staying at the apartment
             </span>
           </label>
 
@@ -338,7 +338,7 @@ function EventDetailContent({ id }: { id: string }) {
             {/* Participant roster with individual date ranges */}
             {event.participants.length > 0 && (
               <div className="mt-4">
-                <p className="text-xs font-medium text-[#9c8b75] mb-2">Who's going</p>
+                <p className="text-xs font-medium text-[#9c8b75] mb-2">Who is going</p>
                 <ParticipantRoster event={event} />
               </div>
             )}

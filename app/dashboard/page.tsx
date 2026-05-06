@@ -165,8 +165,9 @@ function ItineraryWidget({ nextEvent, nextItinerary }: { nextEvent: EventWithDet
 
 function CountdownBanner({ event }: { event: EventWithDetails }) {
   const dismissKey = `countdown_dismissed_${event.id}`
-  const [dismissed, setDismissed] = useState(false)
-  useEffect(() => { if (localStorage.getItem(dismissKey)) setDismissed(true) }, [dismissKey])
+  const [dismissed, setDismissed] = useState(() =>
+    typeof window !== 'undefined' ? Boolean(localStorage.getItem(dismissKey)) : false
+  )
   if (dismissed) return null
   const days = differenceInCalendarDays(parseISO(event.start_date), new Date())
   const label = days === 0 ? 'starts today!' : `starts in ${days} day${days === 1 ? '' : 's'}!`

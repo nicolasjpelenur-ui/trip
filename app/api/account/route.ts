@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { loadEnvConfig } from '@next/env'
 
 export const runtime = 'nodejs'
 
@@ -6,9 +7,37 @@ type DeleteAccountBody = {
   personId?: string
 }
 
+let attemptedEnvReload = false
+
+function cleanEnvValue(value: string | undefined) {
+  const trimmed = value?.trim()
+  if (!trimmed) return undefined
+
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim()
+  }
+
+  return trimmed
+}
+
+function getServerEnv(name: string) {
+  let value = cleanEnvValue(process.env[name])
+
+  if (!value && process.env.NODE_ENV !== 'production' && !attemptedEnvReload) {
+    attemptedEnvReload = true
+    loadEnvConfig(process.cwd(), true, console, true)
+    value = cleanEnvValue(process.env[name])
+  }
+
+  return value
+}
+
 function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const url = getServerEnv('NEXT_PUBLIC_SUPABASE_URL')
+  const serviceRoleKey = getServerEnv('SUPABASE_SERVICE_ROLE_KEY')
 
   if (!url || !serviceRoleKey) return null
 

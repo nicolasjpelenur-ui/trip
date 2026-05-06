@@ -176,12 +176,12 @@ export function OnboardingHost() {
             <p className="text-sm text-[#6b5d4f] mt-3 leading-relaxed max-w-xs">{slide.body}</p>
             {slide.tip && (
               <p className="mt-3 text-xs text-[#5b4cf5] bg-[#5b4cf5]/10 border border-[#5b4cf5]/20 rounded-xl px-3 py-1.5 inline-block font-medium">
-                💡 {slide.tip}
+                Tip: {slide.tip}
               </p>
             )}
             {isLast && (
               <div className="mt-4 flex flex-col items-center gap-2.5">
-                <p className="text-sm font-semibold text-[#1a1614]">You're all set! 🎉</p>
+                <p className="text-sm font-semibold text-[#1a1614]">You are all set.</p>
                 <Link
                   href="/events/new"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#e8724a] px-4 py-2 rounded-xl hover:bg-[#d4663f] transition-colors"

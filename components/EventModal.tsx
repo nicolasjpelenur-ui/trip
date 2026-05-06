@@ -74,7 +74,7 @@ function JoinEventPanel({
               onClick={() => setCustomDates(true)}
               className="flex-1 text-xs font-medium text-[#5b4cf5] py-1.5 rounded-xl border border-[#5b4cf5]/30 hover:bg-white transition-colors"
             >
-              I'm joining different dates
+              I am joining different dates
             </button>
             <button onClick={onDone} className="text-xs text-[#9c8b75] px-3 py-1.5 rounded-xl hover:bg-white transition-colors">
               Cancel
@@ -133,7 +133,7 @@ function ParticipantList({ event }: { event: EventWithDetails }) {
 
   return (
     <div className="px-3.5 pt-2 pb-1 space-y-1">
-      <p className="text-[10px] font-semibold text-[#9c8b75] uppercase tracking-wide mb-1.5">Who's there when</p>
+      <p className="text-[10px] font-semibold text-[#9c8b75] uppercase tracking-wide mb-1.5">Who is there when</p>
       {event.participants.map((p) => {
         const arrival = p.arrival_date ?? event.start_date
         const departure = p.departure_date ?? event.end_date
@@ -190,7 +190,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
 
   // When a drag range is provided, jump straight into create mode
   useEffect(() => {
-    if (createRange) setCreating(true)
+    if (createRange) queueMicrotask(() => setCreating(true))
   }, [createRange])
 
   if (!date) return null
@@ -301,7 +301,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                           isParticipant ? 'text-green-700 bg-green-50' : 'text-[#9c8b75] bg-[#f3efe8]'
                         }`}>
                           {isParticipant
-                            ? <><Check className="w-3 h-3" /> You're going</>
+                            ? <><Check className="w-3 h-3" /> You are going</>
                             : <><span className="w-1.5 h-1.5 rounded-full bg-[#c9b99f]" /> Not joined</>
                           }
                         </div>
