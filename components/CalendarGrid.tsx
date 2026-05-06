@@ -91,7 +91,21 @@ interface ResizeState {
 }
 
 function MonthGrid({
-  month, events, onDayClick, onRangeSelect, compact = false, colorMode = 'person', onRefresh,
+  month,
+  events,
+  onDayClick,
+  onRangeSelect,
+  compact = false,
+  colorMode = 'person',
+  onRefresh,
+  dragStart,
+  dragEnd,
+  tapRangeStart,
+  setDragStart,
+  setDragEnd,
+  setTapRangeStart,
+  dragPointerIdRef,
+  didDragRangeRef,
 }: {
   month: Date
   events: EventWithDetails[]
@@ -100,14 +114,17 @@ function MonthGrid({
   compact?: boolean
   colorMode?: 'person' | 'location'
   onRefresh: () => void
+  dragStart: Date | null
+  dragEnd: Date | null
+  tapRangeStart: Date | null
+  setDragStart: (day: Date | null) => void
+  setDragEnd: (day: Date | null) => void
+  setTapRangeStart: (day: Date | null) => void
+  dragPointerIdRef: React.MutableRefObject<number | null>
+  didDragRangeRef: React.MutableRefObject<boolean>
 }) {
-  const [dragStart, setDragStart] = useState<Date | null>(null)
-  const [dragEnd, setDragEnd] = useState<Date | null>(null)
-  const [tapRangeStart, setTapRangeStart] = useState<Date | null>(null)
   const [resizing, setResizing] = useState<ResizeState | null>(null)
   const weekRefs = useRef<Map<string, HTMLDivElement>>(new Map())
-  const dragPointerId = useRef<number | null>(null)
-  const didDragRange = useRef(false)
 
   const weeks = eachWeekOfInterval({
     start: startOfWeek(startOfMonth(month)),
@@ -132,7 +149,11 @@ function MonthGrid({
     const value = target?.dataset.calendarDate
     if (value) return parseISO(value)
 
-    for (const [weekKey, row] of weekRefs.current.entries()) {
+    const weekRows = document.querySelectorAll<HTMLElement>('[data-calendar-week-start]')
+
+    for (const row of weekRows) {
+      const weekKey = row.dataset.calendarWeekStart
+      if (!weekKey) continue
       const rect = row.getBoundingClientRect()
       if (
         e.clientY >= rect.top &&
@@ -156,26 +177,26 @@ function MonthGrid({
   }
 
   function handleDayPointerDown(e: React.PointerEvent<HTMLButtonElement>, day: Date) {
-    dragPointerId.current = e.pointerId
-    didDragRange.current = false
+    dragPointerIdRef.current = e.pointerId
+    didDragRangeRef.current = false
     e.currentTarget.setPointerCapture(e.pointerId)
     setDragStart(day)
     setDragEnd(day)
   }
 
   function handleDayPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
-    if (dragPointerId.current !== e.pointerId || !dragStart) return
+    if (dragPointerIdRef.current !== e.pointerId || !dragStart) return
     const day = getPointerDay(e)
     if (!day) return
     if (!isSameDay(day, dragEnd ?? dragStart)) {
-      didDragRange.current = true
+      didDragRangeRef.current = true
       setDragEnd(day)
     }
     if (e.pointerType !== 'mouse') e.preventDefault()
   }
 
   function handleDayPointerEnter(day: Date) {
-    if (dragStart && dragPointerId.current === null) setDragEnd(day)
+    if (dragStart && dragPointerIdRef.current === null) setDragEnd(day)
   }
 
   function handleDayPointerUp(e: React.PointerEvent<HTMLButtonElement>, day: Date) {
@@ -184,7 +205,7 @@ function MonthGrid({
 
     if (dragStart && !isSameDay(dragStart, endDay)) {
       openRange(dragStart, endDay)
-    } else if (isTouchLike && !didDragRange.current) {
+    } else if (isTouchLike && !didDragRangeRef.current) {
       if (tapRangeStart && !isSameDay(tapRangeStart, day)) {
         openRange(tapRangeStart, day)
       } else if (tapRangeStart && isSameDay(tapRangeStart, day)) {
@@ -198,8 +219,8 @@ function MonthGrid({
       onDayClick(day)
     }
 
-    dragPointerId.current = null
-    didDragRange.current = false
+    dragPointerIdRef.current = null
+    didDragRangeRef.current = false
     setDragStart(null)
     setDragEnd(null)
   }
@@ -276,6 +297,7 @@ function MonthGrid({
           return (
             <div
               key={rowKey}
+              data-calendar-week-start={format(weekStart, 'yyyy-MM-dd')}
               ref={(el) => { if (el) weekRefs.current.set(rowKey, el) }}
               className="relative border-b border-[#ede8e0] last:border-0"
               onPointerMove={resizing ? handleResizePointerMove : undefined}
@@ -308,8 +330,8 @@ function MonthGrid({
                       onPointerEnter={() => handleDayPointerEnter(day)}
                       onPointerUp={(e) => handleDayPointerUp(e, day)}
                       onPointerCancel={() => {
-                        dragPointerId.current = null
-                        didDragRange.current = false
+                        dragPointerIdRef.current = null
+                        didDragRangeRef.current = false
                         setDragStart(null)
                         setDragEnd(null)
                       }}
@@ -406,12 +428,17 @@ export function CalendarGrid() {
   const { events, currentMonth, setCurrentMonth, loading, people, setViewMonths, onlinePersonIds, refresh } = useTripContext()
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [createRange, setCreateRange] = useState<{ start: string; end: string } | null>(null)
+  const [dragStart, setDragStart] = useState<Date | null>(null)
+  const [dragEnd, setDragEnd] = useState<Date | null>(null)
+  const [tapRangeStart, setTapRangeStart] = useState<Date | null>(null)
   const [activePeople, setActivePeople] = useState<Set<string> | null>(null)
   const [viewCount, setViewCount] = useState(1)
   const [colorMode, setColorMode] = useState<'person' | 'location'>('person')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
   const [pickerRangeStart, setPickerRangeStart] = useState<{ year: number; month: number } | null>(null)
+  const dragPointerIdRef = useRef<number | null>(null)
+  const didDragRangeRef = useRef(false)
 
   const today = startOfMonth(new Date())
   const isOnToday = currentMonth.getFullYear() === today.getFullYear() && currentMonth.getMonth() === today.getMonth()
@@ -437,6 +464,22 @@ export function CalendarGrid() {
         setPickerOpen(false)
       }
     }
+  }
+
+  function handleRangeSelect(start: string, end: string) {
+    setCreateRange({ start, end })
+    setSelectedDay(parseISO(start))
+  }
+
+  const sharedRangeProps = {
+    dragStart,
+    dragEnd,
+    tapRangeStart,
+    setDragStart,
+    setDragEnd,
+    setTapRangeStart,
+    dragPointerIdRef,
+    didDragRangeRef,
   }
 
   const lastMonth = addMonths(currentMonth, viewCount - 1)
@@ -620,13 +663,32 @@ export function CalendarGrid() {
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 divide-x divide-[#ede8e0]">
             {months.map((m) => (
-              <MonthGrid key={m.toISOString()} month={m} events={filteredEvents} onDayClick={setSelectedDay} onRangeSelect={(s, e) => { setCreateRange({ start: s, end: e }); setSelectedDay(parseISO(s)) }} compact colorMode={colorMode} onRefresh={refresh} />
+              <MonthGrid
+                key={m.toISOString()}
+                month={m}
+                events={filteredEvents}
+                onDayClick={setSelectedDay}
+                onRangeSelect={handleRangeSelect}
+                compact
+                colorMode={colorMode}
+                onRefresh={refresh}
+                {...sharedRangeProps}
+              />
             ))}
           </div>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto flex flex-col">
-          <MonthGrid month={currentMonth} events={filteredEvents} onDayClick={setSelectedDay} onRangeSelect={(s, e) => { setCreateRange({ start: s, end: e }); setSelectedDay(parseISO(s)) }} compact={false} colorMode={colorMode} onRefresh={refresh} />
+          <MonthGrid
+            month={currentMonth}
+            events={filteredEvents}
+            onDayClick={setSelectedDay}
+            onRangeSelect={handleRangeSelect}
+            compact={false}
+            colorMode={colorMode}
+            onRefresh={refresh}
+            {...sharedRangeProps}
+          />
         </div>
       )}
 
