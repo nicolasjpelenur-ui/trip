@@ -142,13 +142,22 @@ export async function DELETE(request: Request) {
     return Response.json({ error: 'Could not connect to Supabase.' }, { status: 500 })
   }
 
-  const { error: deletePersonError } = await writer
+  const { data: deletedPerson, error: deletePersonError } = await writer
     .from('people')
     .delete()
     .eq('id', body.personId)
+    .select('id')
+    .maybeSingle()
 
   if (deletePersonError) {
     return Response.json({ error: deletePersonError.message }, { status: 500 })
+  }
+
+  if (!deletedPerson) {
+    return Response.json(
+      { error: 'Profile could not be deleted. Check server Supabase permissions.' },
+      { status: 500 }
+    )
   }
 
   return Response.json({ ok: true })

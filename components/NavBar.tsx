@@ -22,6 +22,7 @@ const TAB_ITEMS = [
 export function NavBar() {
   const pathname = usePathname()
   const router = useRouter()
+  const [signedIn, setSignedIn] = useState(false)
   const [userName, setUserName] = useState('')
   const [userColor, setUserColor] = useState('#5b4cf5')
   const [chatUnread, setChatUnread] = useState(false)
@@ -30,14 +31,29 @@ export function NavBar() {
     queueMicrotask(() => {
       const id = localStorage.getItem('currentPersonId')
       const name = localStorage.getItem('currentPersonName')
+      setSignedIn(Boolean(id))
       setUserName(name ?? '')
       if (id) {
         supabase.from('people').select('color').eq('id', id).single().then(({ data }) => {
           if (data) setUserColor(data.color)
         })
+      } else {
+        setUserColor('#5b4cf5')
       }
     })
   }, [pathname])
+
+  useEffect(() => {
+    function handlePersonSignedOut() {
+      setSignedIn(false)
+      setUserName('')
+      setUserColor('#5b4cf5')
+      setChatUnread(false)
+    }
+
+    window.addEventListener('personSignedOut', handlePersonSignedOut)
+    return () => window.removeEventListener('personSignedOut', handlePersonSignedOut)
+  }, [])
 
   useEffect(() => {
     async function checkUnread() {
@@ -58,6 +74,8 @@ export function NavBar() {
     }
     checkUnread()
   }, [pathname])
+
+  if (!signedIn) return null
 
   return (
     <>
@@ -87,7 +105,9 @@ export function NavBar() {
                 supabase.auth.signOut()
                 localStorage.removeItem('currentPersonId')
                 localStorage.removeItem('currentPersonName')
+                window.dispatchEvent(new Event('personSignedOut'))
                 router.push('/')
+                router.refresh()
               }}
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity"
               style={{ backgroundColor: userColor }}

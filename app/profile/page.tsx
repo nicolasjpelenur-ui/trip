@@ -150,7 +150,9 @@ function ProfileContent() {
       await supabase.auth.signOut()
       localStorage.removeItem('currentPersonId')
       localStorage.removeItem('currentPersonName')
+      window.dispatchEvent(new Event('personSignedOut'))
       router.replace('/')
+      router.refresh()
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : 'Could not delete account.')
     } finally {

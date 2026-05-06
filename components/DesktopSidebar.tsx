@@ -29,6 +29,7 @@ export function DesktopSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [signedIn, setSignedIn] = useState(false)
   const [userName, setUserName] = useState('')
   const [userColor, setUserColor] = useState('#5b4cf5')
   const [chatUnread, setChatUnread] = useState(false)
@@ -43,11 +44,22 @@ export function DesktopSidebar() {
 
     function handlePersonUpdated(e: Event) {
       const detail = (e as CustomEvent<{ name: string; color: string }>).detail
+      setSignedIn(true)
       setUserName(detail.name)
       setUserColor(detail.color)
     }
+    function handlePersonSignedOut() {
+      setSignedIn(false)
+      setUserName('')
+      setUserColor('#5b4cf5')
+      setChatUnread(false)
+    }
     window.addEventListener('personUpdated', handlePersonUpdated)
-    return () => window.removeEventListener('personUpdated', handlePersonUpdated)
+    window.addEventListener('personSignedOut', handlePersonSignedOut)
+    return () => {
+      window.removeEventListener('personUpdated', handlePersonUpdated)
+      window.removeEventListener('personSignedOut', handlePersonSignedOut)
+    }
   }, [])
 
   // Re-read user identity on every route change so switching profiles updates immediately
@@ -55,11 +67,14 @@ export function DesktopSidebar() {
     queueMicrotask(() => {
       const id = localStorage.getItem('currentPersonId')
       const name = localStorage.getItem('currentPersonName')
+      setSignedIn(Boolean(id))
       setUserName(name ?? '')
       if (id) {
         supabase.from('people').select('color').eq('id', id).single().then(({ data }) => {
           if (data) setUserColor(data.color)
         })
+      } else {
+        setUserColor('#5b4cf5')
       }
     })
   }, [pathname])
@@ -103,8 +118,12 @@ export function DesktopSidebar() {
     supabase.auth.signOut()
     localStorage.removeItem('currentPersonId')
     localStorage.removeItem('currentPersonName')
+    window.dispatchEvent(new Event('personSignedOut'))
     router.push('/')
+    router.refresh()
   }
+
+  if (!signedIn) return null
 
   return (
     <aside className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-30 border-r border-[#e0d8cc] transition-all duration-200 ${collapsed ? 'w-14' : 'w-52'}`}
