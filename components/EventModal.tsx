@@ -10,6 +10,7 @@ import { getPeople } from '@/lib/queries'
 import { EventComments } from './EventComments'
 import { EventForm } from './EventForm'
 import { EventSummaryCard } from './EventSummaryCard'
+import { TravelDetailsFields, TravelDetailsValue } from './TravelDetailsFields'
 import { PersonAvatar } from './PersonChip'
 import { ArrowLeft, CalendarDays, Check, Home, Pencil, Plus, Trash2, UserPlus, UserMinus } from 'lucide-react'
 
@@ -36,6 +37,9 @@ function JoinEventPanel({
   const [departure, setDeparture] = useState(event.end_date)
   const [staying, setStaying] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [travel, setTravel] = useState<TravelDetailsValue>({
+    arrival_time: null, departure_time: null, transport_mode: null, transport_details: null,
+  })
 
   async function handleJoin(useCustom: boolean) {
     setSaving(true)
@@ -44,6 +48,7 @@ function JoinEventPanel({
         staying_at_apartment: staying,
         arrival_date: useCustom && arrival !== event.start_date ? arrival : null,
         departure_date: useCustom && departure !== event.end_date ? departure : null,
+        ...travel,
       })
       logActivity(currentPerson.id, 'joined_event', event.title, 'event', event.id)
       onDone()
@@ -107,6 +112,7 @@ function JoinEventPanel({
               <Home className="w-3 h-3 text-[#e8724a]" /> Staying at the apartment
             </span>
           </label>
+          <TravelDetailsFields value={travel} onChange={setTravel} />
           <div className="flex gap-2">
             <button onClick={() => handleJoin(true)} disabled={saving}
               className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#5b4cf5] py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors">

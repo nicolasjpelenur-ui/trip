@@ -8,6 +8,8 @@ import {
   CalendarDays, ChevronLeft, EyeOff, Home,
   MapPin, Pencil, UserMinus, UserPlus, Users,
 } from 'lucide-react'
+import { TravelDetailsFields, TravelDetailsValue, transportIcon } from '@/components/TravelDetailsFields'
+import { WeatherStrip } from '@/components/WeatherStrip'
 import { NavBar } from '@/components/NavBar'
 import { RealtimeProvider } from '@/components/RealtimeProvider'
 import { EventComments } from '@/components/EventComments'
@@ -34,6 +36,9 @@ function JoinBanner({
   const [staying, setStaying] = useState(false)
   const [saving, setSaving] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [travel, setTravel] = useState<TravelDetailsValue>({
+    arrival_time: null, departure_time: null, transport_mode: null, transport_details: null,
+  })
 
   const totalDays = differenceInCalendarDays(parseISO(event.end_date), parseISO(event.start_date)) + 1
   const customDays = differenceInCalendarDays(parseISO(departure), parseISO(arrival)) + 1
@@ -46,6 +51,7 @@ function JoinBanner({
         staying_at_apartment: staying,
         arrival_date: arrival !== event.start_date ? arrival : null,
         departure_date: departure !== event.end_date ? departure : null,
+        ...travel,
       })
       logActivity(currentPerson.id, 'joined_event', event.title, 'event', event.id)
       onJoined()
@@ -131,6 +137,8 @@ function JoinBanner({
             </span>
           </label>
 
+          <TravelDetailsFields value={travel} onChange={setTravel} />
+
           <div className="flex gap-2">
             <button
               onClick={handleJoin}
@@ -180,6 +188,72 @@ function ParticipantRoster({ event }: { event: EventWithDetails }) {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+/** Shows participants who have entered an arrival or departure time, sorted chronologically */
+function ArrivalsDeparturesPanel({ event }: { event: EventWithDetails }) {
+  const [open, setOpen] = useState(false)
+  const entries: { type: 'arrival' | 'departure'; date: string; time: string; participant: EventWithDetails['participants'][number] }[] = []
+  for (const p of event.participants) {
+    if (p.arrival_time) {
+      entries.push({ type: 'arrival', date: p.arrival_date ?? event.start_date, time: p.arrival_time, participant: p })
+    }
+    if (p.departure_time) {
+      entries.push({ type: 'departure', date: p.departure_date ?? event.end_date, time: p.departure_time, participant: p })
+    }
+  }
+  if (entries.length === 0) return null
+  entries.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+
+  return (
+    <div className="rounded-xl border border-[#e8e0d5] bg-white" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-[#faf7f2] rounded-xl transition-colors"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold text-[#1a1614]">
+          <CalendarDays className="w-4 h-4 text-[#5b4cf5]" />
+          Arrivals & departures
+          <span className="text-[10px] font-medium text-[#9c8b75]">({entries.length} {entries.length === 1 ? 'time' : 'times'} set)</span>
+        </span>
+        <span className="text-[10px] text-[#9c8b75]">{open ? 'Hide' : 'Show'}</span>
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-1 space-y-1.5 border-t border-[#e8e0d5]">
+          {entries.map((entry, i) => {
+            const TIcon = transportIcon(entry.participant.transport_mode)
+            const isArrival = entry.type === 'arrival'
+            return (
+              <div key={i} className="flex items-center gap-2.5 rounded-lg bg-[#faf7f2] px-3 py-2">
+                <PersonAvatar person={entry.participant.person} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-[#1a1614] truncate">
+                    <span className="font-semibold">{entry.participant.person.name.split(' ')[0]}</span>
+                    <span className="text-[#9c8b75] font-normal"> {isArrival ? 'arrives' : 'departs'} </span>
+                    {format(parseISO(entry.date), 'EEE MMM d')} · {entry.time.slice(0, 5)}
+                  </p>
+                  {entry.participant.transport_details && (
+                    <p className="text-[10px] text-[#9c8b75] truncate flex items-center gap-1">
+                      {TIcon && <TIcon className="w-2.5 h-2.5" />}
+                      {entry.participant.transport_details}
+                    </p>
+                  )}
+                </div>
+                {TIcon && !entry.participant.transport_details && (
+                  <TIcon className="w-3.5 h-3.5 text-[#9c8b75] flex-shrink-0" />
+                )}
+                {entry.participant.staying_at_apartment && isArrival && (
+                  <span className="text-[9px] font-medium text-[#e8724a] bg-[#fdf0ea] rounded-full px-1.5 py-0.5 flex-shrink-0">
+                    Pickup
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -301,6 +375,10 @@ function EventDetailContent({ id }: { id: string }) {
       </div>
 
       <EventSummaryCard event={event} showCountdown />
+
+      <WeatherStrip event={event} />
+
+      <ArrivalsDeparturesPanel event={event} />
 
       {/* Join banner — only for logged-in non-participants */}
       {showJoinBanner && (

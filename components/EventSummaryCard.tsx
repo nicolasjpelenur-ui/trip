@@ -8,6 +8,7 @@ import { EventWithDetails } from '@/lib/supabase'
 import { getLocationColor, getLocationIcon } from '@/lib/locationIcons'
 import { PersonAvatar } from './PersonChip'
 import { eventCountdownLabel } from '@/lib/eventUtils'
+import { WeatherChip } from './WeatherStrip'
 
 interface EventSummaryCardProps {
   event: EventWithDetails
@@ -51,6 +52,7 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
                   {eventCountdownLabel(event)}
                 </span>
               )}
+              {showCountdown && <WeatherChip event={event} />}
             </div>
           </div>
         </div>

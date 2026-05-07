@@ -7,13 +7,13 @@ import {
   isWithinInterval, parseISO, format, eachWeekOfInterval,
   addDays, addMonths, getDay, min, max,
 } from 'date-fns'
-import { EventWithDetails } from '@/lib/supabase'
+import { EventWithDetails, Person } from '@/lib/supabase'
 import { EventModal } from './EventModal'
 import { useTripContext } from './RealtimeProvider'
 import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
 import { updateEventDates } from '@/lib/queries'
 import { canSeeEvent } from '@/lib/eventUtils'
-import { Users, MapPin, ChevronDown } from 'lucide-react'
+import { Users, MapPin, ChevronDown, Cake, CalendarDays } from 'lucide-react'
 
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const EVENT_ROW_H = 20
@@ -93,6 +93,7 @@ interface ResizeState {
 function MonthGrid({
   month,
   events,
+  people,
   onDayClick,
   onRangeSelect,
   compact = false,
@@ -109,6 +110,7 @@ function MonthGrid({
 }: {
   month: Date
   events: EventWithDetails[]
+  people: Person[]
   onDayClick: (d: Date) => void
   onRangeSelect: (start: string, end: string) => void
   compact?: boolean
@@ -310,6 +312,13 @@ function MonthGrid({
                   const dayCount = getEventsForDay(events, day).length
                   const overflow = dayCount - MAX_ROWS
                   const highlighted = isDragHighlighted(day)
+                  const dayMonth = day.getMonth() + 1
+                  const dayDay = day.getDate()
+                  const birthdayPeople = inMonth ? people.filter((p) => {
+                    if (!p.birthday) return false
+                    const [, m, d] = p.birthday.split('-').map(Number)
+                    return m === dayMonth && d === dayDay
+                  }) : []
 
                   if (compact && !inMonth) {
                     return (
@@ -344,11 +353,25 @@ function MonthGrid({
                       }`}
                       style={{ minHeight: compact ? 70 : 88, padding: '3px 3px 2px 3px', touchAction: 'none' }}
                     >
-                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${
-                        today ? 'bg-[#5b4cf5] text-white' : 'text-[#1a1614]'
-                      }`}>
-                        {format(day, 'd')}
-                      </span>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${
+                          today ? 'bg-[#5b4cf5] text-white' : 'text-[#1a1614]'
+                        }`}>
+                          {format(day, 'd')}
+                        </span>
+                        {birthdayPeople.length > 0 && (
+                          <span
+                            className="flex items-center gap-0.5 rounded-full px-1 py-0.5"
+                            style={{ backgroundColor: '#fdf0ea' }}
+                            title={`Birthday: ${birthdayPeople.map((p) => p.name).join(', ')}`}
+                          >
+                            <Cake className="w-2.5 h-2.5 text-[#e8724a]" />
+                            {birthdayPeople.slice(0, 2).map((p) => (
+                              <span key={p.id} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
+                            ))}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ height: MAX_ROWS * EVENT_ROW_H }} />
                       {overflow > 0 && (
                         <div className="text-[9px] font-semibold text-[#5b4cf5] bg-[#5b4cf5]/10 rounded px-1 py-0.5 mx-0.5 leading-none">
@@ -667,6 +690,7 @@ export function CalendarGrid() {
                 key={m.toISOString()}
                 month={m}
                 events={filteredEvents}
+                people={people}
                 onDayClick={setSelectedDay}
                 onRangeSelect={handleRangeSelect}
                 compact
@@ -682,6 +706,7 @@ export function CalendarGrid() {
           <MonthGrid
             month={currentMonth}
             events={filteredEvents}
+            people={people}
             onDayClick={setSelectedDay}
             onRangeSelect={handleRangeSelect}
             compact={false}
@@ -693,6 +718,24 @@ export function CalendarGrid() {
       )}
 
       <EventModal date={selectedDay} events={selectedEvents} createRange={createRange} onClose={() => { setSelectedDay(null); setCreateRange(null) }} onRefresh={refresh} />
+
+      {/* Today floating pill — only visible when current view doesn't include today */}
+      {(() => {
+        const t = new Date()
+        const monthStart = startOfMonth(currentMonth)
+        const monthEnd = endOfMonth(addMonths(currentMonth, viewCount - 1))
+        if (t >= monthStart && t <= monthEnd) return null
+        return (
+          <button
+            onClick={() => setCurrentMonth(new Date())}
+            className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-30 inline-flex items-center gap-1.5 bg-white border border-[#e8e0d5] rounded-full px-3.5 py-2 text-xs font-semibold text-[#5b4cf5] shadow-lg hover:bg-[#5b4cf5] hover:text-white transition-all active:scale-95"
+            style={{ boxShadow: '0 4px 16px rgba(90,50,10,0.12)' }}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            Today
+          </button>
+        )
+      })()}
     </div>
   )
 }

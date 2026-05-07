@@ -8,8 +8,12 @@ export interface Person {
   email: string | null
   auth_user_id: string | null
   onboarding_completed_at: string | null
+  birthday: string | null
+  show_birthday_year: boolean
   created_at: string
 }
+
+export type TransportMode = 'plane' | 'train' | 'car' | 'bus'
 
 export interface ActivityLog {
   id: string
@@ -26,6 +30,8 @@ export interface Location {
   id: string
   name: string
   emoji: string
+  latitude: number | null
+  longitude: number | null
 }
 
 export interface Event {
@@ -47,6 +53,10 @@ export interface EventParticipant {
   staying_at_apartment: boolean
   arrival_date: string | null
   departure_date: string | null
+  arrival_time: string | null
+  departure_time: string | null
+  transport_mode: TransportMode | null
+  transport_details: string | null
   person?: Person
 }
 

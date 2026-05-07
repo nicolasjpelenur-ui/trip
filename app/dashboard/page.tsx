@@ -25,6 +25,7 @@ import {
   Map,
   MessageSquare,
   Plus,
+  Cake,
   UserPlus,
   X,
 } from 'lucide-react'
@@ -38,6 +39,8 @@ import { EventWithDetails, ItineraryDayWithItems, Person } from '@/lib/supabase'
 import { getPollsForEvent, getPollsForGroup, Poll } from '@/lib/pollQueries'
 import { getEventItinerary } from '@/lib/itineraryQueries'
 import { canEditEvent, canSeeEvent, eventCountdownLabel, isUpcoming, today } from '@/lib/eventUtils'
+import { ageOnNextBirthday, daysUntilBirthday } from '@/lib/birthdayUtils'
+import { useToast } from '@/components/Toast'
 
 type ChatPreview = {
   group: GroupWithMembers
@@ -163,6 +166,62 @@ function ItineraryWidget({ nextEvent, nextItinerary }: { nextEvent: EventWithDet
   )
 }
 
+function BirthdayBanner({ people }: { people: Person[] }) {
+  const upcoming = people
+    .map((p) => ({ p, days: daysUntilBirthday(p) }))
+    .filter((x): x is { p: Person; days: number } => x.days !== null && x.days <= 7)
+    .sort((a, b) => a.days - b.days)
+  const next = upcoming[0]
+  const dismissKey = next ? `bday_dismissed_${next.p.id}_${new Date().getFullYear()}` : ''
+  const [dismissed, setDismissed] = useState(() =>
+    typeof window !== 'undefined' && dismissKey ? Boolean(localStorage.getItem(dismissKey)) : false
+  )
+
+  // Confetti burst when someone has a birthday today (once per day per browser)
+  useEffect(() => {
+    if (!next || next.days !== 0) return
+    const flagKey = `bday_celebrated_${next.p.id}_${new Date().toISOString().slice(0, 10)}`
+    if (typeof window === 'undefined' || localStorage.getItem(flagKey)) return
+    localStorage.setItem(flagKey, '1')
+    void import('canvas-confetti').then(({ default: confetti }) => {
+      confetti({
+        particleCount: 90,
+        spread: 75,
+        origin: { y: 0.18 },
+        colors: ['#5b4cf5', '#e8724a', '#10b981', '#f59e0b', '#ec4899'],
+        scalar: 0.9,
+      })
+    })
+  }, [next])
+
+  if (!next || dismissed) return null
+  const age = ageOnNextBirthday(next.p)
+  const dayLabel = next.days === 0 ? 'today' : next.days === 1 ? 'tomorrow' : `in ${next.days} days`
+  const ageSuffix = age != null && next.days === 0 ? ` (${age})` : age != null ? ` will be ${age}` : ''
+  return (
+    <div className="relative rounded-2xl bg-gradient-to-r from-[#fdf0ea] to-[#fdf6f0] border border-[#e8724a]/25 px-5 py-3.5 flex items-center gap-3.5">
+      <div className="w-9 h-9 rounded-xl bg-[#e8724a]/15 flex items-center justify-center flex-shrink-0">
+        <Cake className="w-4.5 h-4.5 text-[#e8724a]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm text-[#1a1614] truncate">
+          {next.p.name.split(' ')[0]}&apos;s birthday is {dayLabel}{ageSuffix}
+        </p>
+        <p className="text-xs text-[#9c8b75] mt-0.5">
+          {next.days === 0 ? 'Reach out and make their day a little brighter.' : 'A small heads-up for the group.'}
+        </p>
+      </div>
+      <button
+        onClick={() => { localStorage.setItem(dismissKey, '1'); setDismissed(true) }}
+        className="text-[#9c8b75] hover:text-[#1a1614] flex-shrink-0"
+        aria-label="Dismiss"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )
+}
+
 function CountdownBanner({ event }: { event: EventWithDetails }) {
   const dismissKey = `countdown_dismissed_${event.id}`
   const [dismissed, setDismissed] = useState(() =>
@@ -194,6 +253,7 @@ function CountdownBanner({ event }: { event: EventWithDetails }) {
 
 function DashboardContent() {
   const router = useRouter()
+  const toast = useToast()
   const { onlinePersonIds, people: allPeople } = useTripContext()
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
   const [events, setEvents] = useState<EventWithDetails[]>([])
@@ -211,8 +271,10 @@ function DashboardContent() {
         staying_at_apartment: false, arrival_date: null, departure_date: null,
       })
       logActivity(currentPerson.id, 'joined_event', event.title, 'event', event.id)
+      toast.show(`Joined ${event.title}`)
     } catch {
       setJoinedIds((prev) => { const s = new Set(prev); s.delete(event.id); return s })
+      toast.show('Could not join. Try again.', 'error')
     }
   }
 
@@ -333,6 +395,7 @@ function DashboardContent() {
   return (
     <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
       {bannerEvent && <CountdownBanner event={bannerEvent} />}
+      <BirthdayBanner people={allPeople} />
 
       {onlineOthers.length > 0 && (
         <div className="flex items-center gap-2.5 px-1">

@@ -30,7 +30,7 @@ export async function getLocations(): Promise<Location[]> {
   return data
 }
 
-export async function createLocation(location: Omit<Location, 'id'>) {
+export async function createLocation(location: Omit<Location, 'id' | 'latitude' | 'longitude'> & Partial<Pick<Location, 'latitude' | 'longitude'>>) {
   const { data, error } = await supabase
     .from('locations')
     .insert(location)
@@ -150,7 +150,15 @@ export async function updateEvent(
 export async function upsertEventParticipant(
   eventId: string,
   personId: string,
-  opts: { staying_at_apartment: boolean; arrival_date: string | null; departure_date: string | null }
+  opts: {
+    staying_at_apartment: boolean
+    arrival_date: string | null
+    departure_date: string | null
+    arrival_time?: string | null
+    departure_time?: string | null
+    transport_mode?: 'plane' | 'train' | 'car' | 'bus' | null
+    transport_details?: string | null
+  }
 ) {
   const { error } = await supabase
     .from('event_participants')

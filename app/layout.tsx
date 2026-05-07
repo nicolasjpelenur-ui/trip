@@ -4,6 +4,7 @@ import "./globals.css";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { OnboardingHost } from "@/components/OnboardingHost";
 import { PageTransition } from "@/components/PageTransition";
+import { ToastProvider } from "@/components/Toast";
 
 const geist = Geist({ subsets: ["latin"] });
 const playfair = Playfair_Display({
@@ -25,11 +26,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className={`${geist.className} ${playfair.variable} min-h-full bg-[#faf7f2]`}>
-        <DesktopSidebar />
-        <OnboardingHost />
-        <div className="page-content min-h-screen">
-          <PageTransition>{children}</PageTransition>
-        </div>
+        <ToastProvider>
+          <DesktopSidebar />
+          <OnboardingHost />
+          <div className="page-content min-h-screen">
+            <PageTransition>{children}</PageTransition>
+          </div>
+        </ToastProvider>
       </body>
     </html>
   );

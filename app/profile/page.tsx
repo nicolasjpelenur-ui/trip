@@ -8,7 +8,8 @@ import { PersonAvatar } from '@/components/PersonChip'
 import { Person } from '@/lib/supabase'
 import { getPeople, updatePerson, updatePersonStatus } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
-import { Eye, EyeOff, ShieldCheck, Trash2 } from 'lucide-react'
+import { Cake, Eye, EyeOff, ShieldCheck, Trash2 } from 'lucide-react'
+import { useToast } from '@/components/Toast'
 
 const COLORS = [
   '#6366f1', '#ec4899', '#f97316', '#10b981',
@@ -21,11 +22,14 @@ const COLORS = [
 
 function ProfileContent() {
   const router = useRouter()
+  const toast = useToast()
   const [person, setPerson] = useState<Person | null>(null)
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
   const [color, setColor] = useState(COLORS[0])
   const [status, setStatus] = useState('')
+  const [birthday, setBirthday] = useState('')
+  const [showBirthdayYear, setShowBirthdayYear] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [pwEmail, setPwEmail] = useState('')
@@ -61,6 +65,8 @@ function ProfileContent() {
       setName(currentPerson.name)
       setColor(currentPerson.color)
       setStatus(currentPerson.status ?? '')
+      setBirthday(currentPerson.birthday ?? '')
+      setShowBirthdayYear(currentPerson.show_birthday_year ?? false)
       setPwEmail(currentPerson.email ?? '')
       setLoading(false)
     }
@@ -75,12 +81,18 @@ function ProfileContent() {
     setSaveError('')
 
     try {
-      await updatePerson(person.id, { name: name.trim(), color })
+      await updatePerson(person.id, {
+        name: name.trim(),
+        color,
+        birthday: birthday || null,
+        show_birthday_year: showBirthdayYear,
+      })
       await updatePersonStatus(person.id, status)
-      const updated = { ...person, name: name.trim(), color, status }
+      const updated = { ...person, name: name.trim(), color, status, birthday: birthday || null, show_birthday_year: showBirthdayYear }
       setPerson(updated)
       localStorage.setItem('currentPersonName', updated.name)
       window.dispatchEvent(new CustomEvent('personUpdated', { detail: { name: updated.name, color: updated.color } }))
+      toast.show('Profile saved')
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : 'Could not save profile.')
     } finally {
@@ -221,6 +233,40 @@ function ProfileContent() {
                 />
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-medium text-[#9c8b75] mb-1">
+              <Cake className="w-3.5 h-3.5" /> Birthday <span className="font-normal text-[#c9b99f]">(optional)</span>
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="date"
+                value={birthday}
+                onChange={(e) => setBirthday(e.target.value)}
+                className="flex-1 border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
+              />
+              {birthday && (
+                <button
+                  type="button"
+                  onClick={() => setBirthday('')}
+                  className="text-xs text-[#9c8b75] hover:text-[#1a1614] px-2 py-1.5"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {birthday && (
+              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showBirthdayYear}
+                  onChange={(e) => setShowBirthdayYear(e.target.checked)}
+                  className="rounded border-[#ede8e0] accent-[#5b4cf5]"
+                />
+                <span className="text-xs text-[#6b5d4f]">Show my age (birthday year visible)</span>
+              </label>
+            )}
           </div>
 
           {saveError && <p className="text-xs text-red-500">{saveError}</p>}

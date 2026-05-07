@@ -283,3 +283,35 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 .slide-content-enter { animation: slideContentIn 0.28s cubic-bezier(0.22,1,0.36,1) both; }
+
+/* ── Toast notifications ── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-4px) scale(0.96); }
+}
+.toast-enter { animation: toastIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
+.toast-leave { animation: toastOut 0.2s ease-in both; }
+
+/* ── Birthday avatar halo ── */
+@keyframes birthdayShimmer {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(232,114,74,0.55), 0 0 0 4px rgba(232,114,74,0.18); }
+  50%      { box-shadow: 0 0 0 2px rgba(245,158,11,0.65), 0 0 0 6px rgba(245,158,11,0.18); }
+}
+.birthday-halo { animation: birthdayShimmer 3s ease-in-out infinite; border-radius: 9999px; }
+
+/* ── Currently traveling avatar glow ── */
+.traveling-glow {
+  box-shadow: 0 0 0 2px rgba(91,76,245,0.45), 0 0 0 4px rgba(91,76,245,0.12);
+  border-radius: 9999px;
+}
+
+/* ── Empty state subtle float ── */
+@keyframes emptyFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.empty-float { animation: emptyFloat 4s ease-in-out infinite; }
