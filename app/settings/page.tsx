@@ -16,6 +16,7 @@ import { useT } from '@/lib/i18n'
 import { usePreferences, TextSize } from '@/lib/preferences'
 import { exportMyData } from '@/lib/dataExport'
 import { clearCurrentPerson } from '@/lib/useCurrentPerson'
+import { disablePush, enablePush, getCurrentSubscription, isPushSupported } from '@/lib/pushClient'
 import type { Locale } from '@/messages'
 
 const COLORS = [
@@ -62,6 +63,9 @@ function SettingsContent() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushSupported, setPushSupported] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -78,6 +82,32 @@ function SettingsContent() {
     }
     load()
   }, [router])
+
+  useEffect(() => {
+    if (!isPushSupported()) { setPushSupported(false); return }
+    setPushSupported(true)
+    getCurrentSubscription().then((sub) => setPushEnabled(!!sub)).catch(() => { /* non-fatal */ })
+  }, [])
+
+  async function handleTogglePush() {
+    if (!person) return
+    setPushBusy(true)
+    try {
+      if (pushEnabled) {
+        await disablePush()
+        setPushEnabled(false)
+        toast.show('Notifications disabled')
+      } else {
+        const result = await enablePush(person.id)
+        if (result.ok) { setPushEnabled(true); toast.show('Notifications enabled') }
+        else if (result.reason === 'denied') toast.show('Browser blocked notifications.', 'error')
+        else if (result.reason === 'unsupported') toast.show('This browser does not support notifications.', 'error')
+        else toast.show('Could not enable notifications.', 'error')
+      }
+    } finally {
+      setPushBusy(false)
+    }
+  }
 
   async function saveProfile() {
     if (!person || !name.trim()) return
@@ -279,24 +309,49 @@ function SettingsContent() {
 
       {/* Notifications */}
       <SectionCard icon={Bell} title={t('settings.sections.notifications')}>
-        {(['birthdays', 'trips', 'messages', 'polls'] as const).map((cat) => (
-          <label key={cat} className="flex items-center justify-between gap-3 cursor-pointer">
-            <span className="text-sm text-[#1a1614]">{t(`settings.notifications.categories.${cat}`)}</span>
-            <button
-              type="button"
-              onClick={() => prefs.setNotificationPref(cat, !prefs.notifications[cat])}
-              className={`w-10 h-5.5 rounded-full transition-colors flex items-center px-0.5 flex-shrink-0 ${
-                prefs.notifications[cat] ? 'bg-[#5b4cf5]' : 'bg-[#e8e0d5]'
-              }`}
-              style={{ height: 22 }}
-            >
-              <span className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${prefs.notifications[cat] ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
-          </label>
-        ))}
-        <p className="text-[11px] text-[#9c8b75] pt-1">
-          {t('settings.notifications.installFirst')}
-        </p>
+        {pushSupported ? (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#1a1614]">{t('settings.notifications.title')}</p>
+                {pushEnabled && (
+                  <p className="text-[11px] text-green-600 mt-0.5">{t('settings.notifications.enabled')}</p>
+                )}
+              </div>
+              <button
+                onClick={handleTogglePush}
+                disabled={pushBusy}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50 ${
+                  pushEnabled
+                    ? 'border border-[#e8e0d5] text-[#9c8b75] hover:bg-[#f3efe8]'
+                    : 'bg-[#5b4cf5] text-white hover:bg-[#4a3dd4]'
+                }`}
+              >
+                {pushBusy ? t('common.saving') : pushEnabled ? t('settings.notifications.disable') : t('settings.notifications.enable')}
+              </button>
+            </div>
+            <div className="pt-2 border-t border-[#e8e0d5] space-y-2.5">
+              {(['birthdays', 'trips', 'messages', 'polls'] as const).map((cat) => (
+                <label key={cat} className="flex items-center justify-between gap-3 cursor-pointer">
+                  <span className="text-sm text-[#1a1614]">{t(`settings.notifications.categories.${cat}`)}</span>
+                  <button
+                    type="button"
+                    onClick={() => prefs.setNotificationPref(cat, !prefs.notifications[cat])}
+                    disabled={!pushEnabled}
+                    className={`w-10 rounded-full transition-colors flex items-center px-0.5 flex-shrink-0 disabled:opacity-40 ${
+                      prefs.notifications[cat] ? 'bg-[#5b4cf5]' : 'bg-[#e8e0d5]'
+                    }`}
+                    style={{ height: 22 }}
+                  >
+                    <span className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${prefs.notifications[cat] ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </label>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-[#9c8b75]">{t('settings.notifications.installFirst')}</p>
+        )}
       </SectionCard>
 
       {/* Privacy & data */}
