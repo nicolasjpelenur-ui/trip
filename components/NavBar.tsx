@@ -8,16 +8,17 @@ import { getMessages } from '@/lib/chatQueries'
 import { openOnboarding } from '@/components/OnboardingHost'
 import {
   CalendarDays, HelpCircle, LayoutDashboard, Map,
-  MessageSquare, Plus, UserRound,
+  MessageSquare, Plus, Settings as SettingsIcon,
 } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 const TAB_ITEMS = [
-  { href: '/dashboard', label: 'Home', Icon: LayoutDashboard },
-  { href: '/calendar', label: 'Calendar', Icon: CalendarDays },
-  { href: '/itinerary', label: 'Itinerary', Icon: Map },
-  { href: '/chat', label: 'Chat', Icon: MessageSquare },
-  { href: '/profile', label: 'Profile', Icon: UserRound },
-]
+  { href: '/dashboard', key: 'dashboard',  Icon: LayoutDashboard },
+  { href: '/calendar',  key: 'calendar',   Icon: CalendarDays },
+  { href: '/itinerary', key: 'itinerary',  Icon: Map },
+  { href: '/chat',      key: 'chat',       Icon: MessageSquare },
+  { href: '/settings',  key: 'settings',   Icon: SettingsIcon },
+] as const
 
 export function NavBar() {
   const pathname = usePathname()
@@ -26,6 +27,7 @@ export function NavBar() {
   const [userName, setUserName] = useState('')
   const [userColor, setUserColor] = useState('#5b4cf5')
   const [chatUnread, setChatUnread] = useState(false)
+  const { t } = useT()
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -111,7 +113,7 @@ export function NavBar() {
               }}
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity"
               style={{ backgroundColor: userColor }}
-              title="Sign out"
+              title={t('nav.signOut')}
             >
               {userName.charAt(0).toUpperCase()}
             </button>
@@ -123,9 +125,10 @@ export function NavBar() {
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#ede8e0]"
         style={{ boxShadow: '0 -1px 12px rgba(100,60,10,0.08)' }}>
         <div className="grid grid-cols-5 h-16">
-          {TAB_ITEMS.map(({ href, label, Icon }) => {
+          {TAB_ITEMS.map(({ href, key, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + '/')
             const isChat = href === '/chat'
+            const label = t(`nav.${key}`)
             return (
               <Link
                 key={href}

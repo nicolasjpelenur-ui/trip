@@ -8,22 +8,23 @@ import { getMessages } from '@/lib/chatQueries'
 import { openOnboarding } from '@/components/OnboardingHost'
 import {
   CalendarDays, MessageSquare, GitBranch, Activity, HelpCircle,
-  Users, UserRound, ChevronLeft, ChevronRight, Plus, LogOut, LayoutDashboard, Map,
+  Users, Settings as SettingsIcon, ChevronLeft, ChevronRight, Plus, LogOut, LayoutDashboard, Map,
 } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 const PRIMARY_NAV = [
-  { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { href: '/calendar', label: 'Calendar', Icon: CalendarDays },
-  { href: '/itinerary', label: 'Itinerary', Icon: Map },
-  { href: '/chat', label: 'Chat', Icon: MessageSquare },
-  { href: '/people', label: 'People', Icon: Users },
-]
+  { href: '/dashboard', key: 'dashboard', Icon: LayoutDashboard },
+  { href: '/calendar',  key: 'calendar',  Icon: CalendarDays },
+  { href: '/itinerary', key: 'itinerary', Icon: Map },
+  { href: '/chat',      key: 'chat',      Icon: MessageSquare },
+  { href: '/people',    key: 'people',    Icon: Users },
+] as const
 
 const SECONDARY_NAV = [
-  { href: '/profile', label: 'Profile', Icon: UserRound },
-  { href: '/arc', label: 'Arc', Icon: GitBranch },
-  { href: '/activity', label: 'Activity', Icon: Activity },
-]
+  { href: '/settings', key: 'settings', Icon: SettingsIcon },
+  { href: '/arc',      key: 'arc',      Icon: GitBranch },
+  { href: '/activity', key: 'activity', Icon: Activity },
+] as const
 
 export function DesktopSidebar() {
   const pathname = usePathname()
@@ -33,6 +34,7 @@ export function DesktopSidebar() {
   const [userName, setUserName] = useState('')
   const [userColor, setUserColor] = useState('#5b4cf5')
   const [chatUnread, setChatUnread] = useState(false)
+  const { t } = useT()
 
   // Collapse setup — once only
   useEffect(() => {
@@ -148,9 +150,10 @@ export function DesktopSidebar() {
 
       {/* Nav links */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {PRIMARY_NAV.map(({ href, label, Icon }) => {
+        {PRIMARY_NAV.map(({ href, key, Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           const isChat = href === '/chat'
+          const label = t(`nav.${key}`)
           return (
             <Link
               key={href}
@@ -176,16 +179,17 @@ export function DesktopSidebar() {
         <Link
           href="/events/new"
           className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium bg-[#5b4cf5] text-white hover:bg-[#4a3dd4] active:scale-[0.98] transition-all mt-2 shadow-sm ${collapsed ? 'justify-center' : ''}`}
-          title={collapsed ? '+ Event' : undefined}
+          title={collapsed ? t('nav.newEvent') : undefined}
         >
           <Plus className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && 'New Event'}
+          {!collapsed && t('nav.newEvent')}
         </Link>
 
         {/* Secondary nav */}
         <div className="pt-2 mt-1 border-t border-[#e0d8cc]/70 space-y-0.5">
-          {SECONDARY_NAV.map(({ href, label, Icon }) => {
+          {SECONDARY_NAV.map(({ href, key, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + '/')
+            const label = t(`nav.${key}`)
             return (
               <Link
                 key={href}
@@ -223,25 +227,25 @@ export function DesktopSidebar() {
         <button
           onClick={openOnboarding}
           className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f0e9de]/70 hover:text-[#1a1614] transition-colors ${collapsed ? 'justify-center' : ''}`}
-          title={collapsed ? 'Help' : undefined}
+          title={collapsed ? t('nav.help') : undefined}
         >
           <HelpCircle className="w-3.5 h-3.5 flex-shrink-0" />
-          {!collapsed && <span>Help</span>}
+          {!collapsed && <span>{t('nav.help')}</span>}
         </button>
         <button
           onClick={signOut}
           className={`flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#fdf0ea] hover:text-[#e8724a] transition-colors ${collapsed ? 'justify-center' : ''}`}
-          title={collapsed ? 'Sign out' : undefined}
+          title={collapsed ? t('nav.signOut') : undefined}
         >
           <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
-          {!collapsed && <span>Sign out</span>}
+          {!collapsed && <span>{t('nav.signOut')}</span>}
         </button>
         <button
           onClick={toggleCollapse}
           className={`flex items-center gap-2 w-full rounded-xl px-2.5 py-2 text-xs text-[#9c8b75] hover:bg-[#f0e9de]/70 transition-colors ${collapsed ? 'justify-center' : ''}`}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? t('nav.collapse') : t('nav.collapse')}
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span>Collapse</span></>}
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span>{t('nav.collapse')}</span></>}
         </button>
       </div>
     </aside>
