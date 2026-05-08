@@ -9,6 +9,7 @@ import { getPeople, getAllEvents } from '@/lib/queries'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { EventWithDetails } from '@/lib/supabase'
 import { parseISO, differenceInCalendarDays, isWithinInterval, format } from 'date-fns'
+import { useT } from '@/lib/i18n'
 
 function getSharedDays(a: Person, b: Person, events: EventWithDetails[]) {
   // Collect all date ranges where each person appears
@@ -51,6 +52,7 @@ function getSharedDays(a: Person, b: Person, events: EventWithDetails[]) {
 }
 
 function OverlapCalculator({ people, events }: { people: Person[]; events: EventWithDetails[] }) {
+  const { t } = useT()
   const [a, setA] = useState<string>('')
   const [b, setB] = useState<string>('')
 
@@ -60,14 +62,14 @@ function OverlapCalculator({ people, events }: { people: Person[]; events: Event
 
   return (
     <div className="mt-6 bg-white rounded-2xl border border-[#ede8e0] p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
-      <h2 className="text-sm font-semibold text-[#1a1614] mb-3">Overlap Calculator</h2>
+      <h2 className="text-sm font-semibold text-[#1a1614] mb-3">{t('peoplePage.overlapTitle')}</h2>
       <div className="flex items-center gap-2">
         <select
           value={a}
           onChange={(e) => setA(e.target.value)}
           className="flex-1 border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
         >
-          <option value="">Person A</option>
+          <option value="">{t('peoplePage.personA')}</option>
           {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <span className="text-[#9c8b75] text-sm font-medium">×</span>
@@ -76,7 +78,7 @@ function OverlapCalculator({ people, events }: { people: Person[]; events: Event
           onChange={(e) => setB(e.target.value)}
           className="flex-1 border border-[#ede8e0] rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-[#faf7f2] text-[#1a1614]"
         >
-          <option value="">Person B</option>
+          <option value="">{t('peoplePage.personB')}</option>
           {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
@@ -84,28 +86,37 @@ function OverlapCalculator({ people, events }: { people: Person[]; events: Event
       {result && a !== b && (
         <div className="mt-3">
           {result.days === 0 ? (
-            <p className="text-sm text-[#9c8b75]">No overlapping days found.</p>
+            <p className="text-sm text-[#9c8b75]">{t('peoplePage.noOverlap')}</p>
           ) : (
             <>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: personA!.color }} />
                 <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: personB!.color }} />
-                <span className="text-sm font-semibold text-[#1a1614]">{result.days} shared day{result.days !== 1 ? 's' : ''}</span>
+                <span className="text-sm font-semibold text-[#1a1614]">
+                  {result.days === 1
+                    ? t('peoplePage.sharedSingular', { count: result.days })
+                    : t('peoplePage.sharedPlural',   { count: result.days })}
+                </span>
               </div>
               <div className="space-y-1">
-                {result.overlaps.slice(0, 5).map((o, i) => (
-                  <div key={i} className="text-xs text-[#9c8b75]">
-                    {o.start.getTime() === o.end.getTime()
-                      ? format(o.start, 'MMM d')
-                      : `${format(o.start, 'MMM d')} – ${format(o.end, 'MMM d')}`}
-                    {' '}
-                    <span className="text-[#9c8b75]/60">
-                      ({differenceInCalendarDays(o.end, o.start) + 1} day{differenceInCalendarDays(o.end, o.start) > 0 ? 's' : ''})
-                    </span>
-                  </div>
-                ))}
+                {result.overlaps.slice(0, 5).map((o, i) => {
+                  const span = differenceInCalendarDays(o.end, o.start) + 1
+                  return (
+                    <div key={i} className="text-xs text-[#9c8b75]">
+                      {o.start.getTime() === o.end.getTime()
+                        ? format(o.start, 'MMM d')
+                        : `${format(o.start, 'MMM d')} – ${format(o.end, 'MMM d')}`}
+                      {' '}
+                      <span className="text-[#9c8b75]/60">
+                        ({span === 1
+                          ? t('peoplePage.daySingular', { count: span })
+                          : t('peoplePage.dayPlural',   { count: span })})
+                      </span>
+                    </div>
+                  )
+                })}
                 {result.overlaps.length > 5 && (
-                  <div className="text-xs text-[#9c8b75]/60">+{result.overlaps.length - 5} more periods</div>
+                  <div className="text-xs text-[#9c8b75]/60">{t('peoplePage.morePeriods', { count: result.overlaps.length - 5 })}</div>
                 )}
               </div>
             </>
@@ -113,13 +124,14 @@ function OverlapCalculator({ people, events }: { people: Person[]; events: Event
         </div>
       )}
       {a === b && a !== '' && (
-        <p className="text-xs text-[#9c8b75] mt-2">Pick two different people.</p>
+        <p className="text-xs text-[#9c8b75] mt-2">{t('peoplePage.pickTwo')}</p>
       )}
     </div>
   )
 }
 
 function PeopleContent() {
+  const { t } = useT()
   const [people, setPeople] = useState<Person[]>([])
   const [events, setEvents] = useState<EventWithDetails[]>([])
   const [loading, setLoading] = useState(true)
@@ -154,12 +166,12 @@ function PeopleContent() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-[#1a1614] mb-1">People</h1>
-      <p className="text-sm text-[#9c8b75] mb-5">Everyone joining the trip.</p>
+      <h1 className="text-xl font-bold text-[#1a1614] mb-1">{t('peoplePage.pageTitle')}</h1>
+      <p className="text-sm text-[#9c8b75] mb-5">{t('peoplePage.pageSubtitle')}</p>
 
       <div className="bg-white rounded-2xl border border-[#ede8e0] overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
         {people.length === 0 && (
-          <div className="text-center text-[#9c8b75] py-8 text-sm">No people yet — add yourself from the home screen.</div>
+          <div className="text-center text-[#9c8b75] py-8 text-sm">{t('peoplePage.none')}</div>
         )}
         {people.map((person) => (
           <div key={person.id} className="border-b border-[#ede8e0] last:border-0">
@@ -184,7 +196,7 @@ function PeopleContent() {
             className="mt-4 flex items-center gap-1.5 text-sm font-medium text-[#9c8b75] hover:text-[#1a1614] transition-colors"
           >
             {showOverlap ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            Overlap Calculator
+            {t('peoplePage.overlapTitle')}
           </button>
           {showOverlap && <OverlapCalculator people={people} events={events} />}
         </>

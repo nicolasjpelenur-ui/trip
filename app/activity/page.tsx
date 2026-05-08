@@ -10,18 +10,11 @@ import { getActivityLog } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { Activity, MessageSquare } from 'lucide-react'
-
-const ACTION_LABELS: Record<string, string> = {
-  created_event: 'created an event',
-  updated_event: 'updated an event',
-  deleted_event: 'deleted an event',
-  sent_message: 'sent a message',
-  added_reaction: 'reacted to an event',
-  updated_status: 'updated their status',
-}
+import { useT } from '@/lib/i18n'
 
 function ActivityContent() {
   const router = useRouter()
+  const { t } = useT()
   const [log, setLog] = useState<ActivityLog[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -63,8 +56,8 @@ function ActivityContent() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-[#1a1614] mb-1">Activity</h1>
-      <p className="text-sm text-[#9c8b75] mb-5">What&apos;s been happening</p>
+      <h1 className="text-xl font-bold text-[#1a1614] mb-1">{t('activity.pageTitle')}</h1>
+      <p className="text-sm text-[#9c8b75] mb-5">{t('activity.pageSubtitle')}</p>
 
       {log.length === 0 ? (
         <div className="text-center py-16 flex flex-col items-center gap-3">
@@ -72,8 +65,8 @@ function ActivityContent() {
             <Activity className="w-6 h-6 text-[#c9b99f]" />
           </div>
           <div>
-            <div className="font-medium text-[#1a1614]">No activity yet</div>
-            <div className="text-xs text-[#9c8b75] mt-0.5">Events and messages will appear here</div>
+            <div className="font-medium text-[#1a1614]">{t('activity.noActivity')}</div>
+            <div className="text-xs text-[#9c8b75] mt-0.5">{t('activity.noActivityHint')}</div>
           </div>
         </div>
       ) : (
@@ -115,7 +108,7 @@ function ActivityContent() {
                           {entry.person.name.split(' ')[0]}{' '}
                         </span>
                       )}
-                      <span className="text-[#9c8b75]">{ACTION_LABELS[entry.action] ?? entry.action}</span>
+                      <span className="text-[#9c8b75]">{t(`activity.actions.${entry.action}`)}</span>
                       {entry.description && (
                         <span className="text-[#1a1614]"> — {entry.description}</span>
                       )}

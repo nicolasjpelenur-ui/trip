@@ -13,6 +13,7 @@ import { EventSummaryCard } from './EventSummaryCard'
 import { TravelDetailsFields, TravelDetailsValue } from './TravelDetailsFields'
 import { PersonAvatar } from './PersonChip'
 import { ArrowLeft, CalendarDays, Check, Home, Pencil, Plus, Trash2, UserPlus, UserMinus } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 interface EventModalProps {
   date: Date | null
@@ -32,6 +33,7 @@ function JoinEventPanel({
   currentPerson: Person
   onDone: () => void
 }) {
+  const { t } = useT()
   const [customDates, setCustomDates] = useState(false)
   const [arrival, setArrival] = useState(event.start_date)
   const [departure, setDeparture] = useState(event.end_date)
@@ -61,7 +63,7 @@ function JoinEventPanel({
 
   return (
     <div className="px-3.5 pb-3.5 pt-2.5 border-t border-[#5b4cf5]/20 bg-[#5b4cf5]/5 space-y-2.5">
-      <p className="text-xs font-semibold text-[#1a1614]">Join this event</p>
+      <p className="text-xs font-semibold text-[#1a1614]">{t('eventModal.joinThis')}</p>
 
       {!customDates ? (
         <>
@@ -72,17 +74,17 @@ function JoinEventPanel({
             className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#5b4cf5] py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            {saving ? 'Joining…' : `Join full stay (${rangeLabel})`}
+            {saving ? t('event.join.joining') : t('eventModal.joinFullStay', { range: rangeLabel })}
           </button>
           <div className="flex gap-2">
             <button
               onClick={() => setCustomDates(true)}
               className="flex-1 text-xs font-medium text-[#5b4cf5] py-1.5 rounded-xl border border-[#5b4cf5]/30 hover:bg-white transition-colors"
             >
-              I am joining different dates
+              {t('eventModal.joinDifferent')}
             </button>
             <button onClick={onDone} className="text-xs text-[#9c8b75] px-3 py-1.5 rounded-xl hover:bg-white transition-colors">
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </>
@@ -91,14 +93,14 @@ function JoinEventPanel({
           {/* Custom date pickers */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Your arrival</label>
+              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">{t('eventModal.yourArrival')}</label>
               <input type="date" value={arrival}
                 onChange={(e) => { setArrival(e.target.value); if (departure < e.target.value) setDeparture(e.target.value) }}
                 className="w-full border border-[#ede8e0] rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-white text-[#1a1614]"
               />
             </div>
             <div>
-              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Your departure</label>
+              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">{t('eventModal.yourDeparture')}</label>
               <input type="date" value={departure} min={arrival}
                 onChange={(e) => setDeparture(e.target.value)}
                 className="w-full border border-[#ede8e0] rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 bg-white text-[#1a1614]"
@@ -109,7 +111,7 @@ function JoinEventPanel({
             <input type="checkbox" checked={staying} onChange={(e) => setStaying(e.target.checked)}
               className="rounded border-[#ede8e0] accent-[#5b4cf5]" />
             <span className="text-xs text-[#6b5d4f] flex items-center gap-1">
-              <Home className="w-3 h-3 text-[#e8724a]" /> Staying at the apartment
+              <Home className="w-3 h-3 text-[#e8724a]" /> {t('eventModal.stayingApt')}
             </span>
           </label>
           <TravelDetailsFields value={travel} onChange={setTravel} />
@@ -117,10 +119,10 @@ function JoinEventPanel({
             <button onClick={() => handleJoin(true)} disabled={saving}
               className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#5b4cf5] py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors">
               <UserPlus className="w-3.5 h-3.5" />
-              {saving ? 'Joining…' : 'Confirm & join'}
+              {saving ? t('event.join.joining') : t('eventModal.confirmJoin')}
             </button>
             <button onClick={() => setCustomDates(false)} className="text-xs text-[#9c8b75] px-3 py-2 rounded-xl hover:bg-white transition-colors">
-              Back
+              {t('common.back')}
             </button>
           </div>
         </>
@@ -131,6 +133,7 @@ function JoinEventPanel({
 
 /** Shows participants with their individual date ranges when they differ from event dates */
 function ParticipantList({ event }: { event: EventWithDetails }) {
+  const { t } = useT()
   if (event.participants.length === 0) return null
   const hasCustomDates = event.participants.some(
     (p) => p.arrival_date || p.departure_date
@@ -139,7 +142,7 @@ function ParticipantList({ event }: { event: EventWithDetails }) {
 
   return (
     <div className="px-3.5 pt-2 pb-1 space-y-1">
-      <p className="text-[10px] font-semibold text-[#9c8b75] uppercase tracking-wide mb-1.5">Who is there when</p>
+      <p className="text-[10px] font-semibold text-[#9c8b75] uppercase tracking-wide mb-1.5">{t('eventModal.whoIsThereWhen')}</p>
       {event.participants.map((p) => {
         const arrival = p.arrival_date ?? event.start_date
         const departure = p.departure_date ?? event.end_date
@@ -154,7 +157,7 @@ function ParticipantList({ event }: { event: EventWithDetails }) {
                 {format(parseISO(arrival), 'MMM d')}–{format(parseISO(departure), 'MMM d')}
               </span>
             ) : (
-              <span className="text-[10px] text-[#9c8b75]">Full stay</span>
+              <span className="text-[10px] text-[#9c8b75]">{t('event.fullStay')}</span>
             )}
             {p.staying_at_apartment && (
               <Home className="w-3 h-3 text-[#e8724a] flex-shrink-0" />
@@ -167,6 +170,7 @@ function ParticipantList({ event }: { event: EventWithDetails }) {
 }
 
 export function EventModal({ date, events, onClose, onRefresh, createRange }: EventModalProps) {
+  const { t } = useT()
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
@@ -253,9 +257,9 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
             )}
             <DialogTitle className="text-base font-semibold text-[#1a1614]">
               {creating
-                ? 'New event'
+                ? t('eventModal.newEvent')
                 : editingEvent
-                ? `Edit — ${editingEvent.title}`
+                ? `${t('eventModal.editPrefix')} — ${editingEvent.title}`
                 : format(date, 'EEEE, MMMM d')}
             </DialogTitle>
           </div>
@@ -277,7 +281,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
             <div className="space-y-2.5 max-h-[60vh] overflow-y-auto -mx-1 px-1">
               {events.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-[#9c8b75]">Nothing planned yet</p>
+                  <p className="text-sm text-[#9c8b75]">{t('eventModal.nothingPlanned')}</p>
                 </div>
               ) : (
                 events.map((event) => {
@@ -307,8 +311,8 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                           isParticipant ? 'text-green-700 bg-green-50' : 'text-[#9c8b75] bg-[#f3efe8]'
                         }`}>
                           {isParticipant
-                            ? <><Check className="w-3 h-3" /> You are going</>
-                            : <><span className="w-1.5 h-1.5 rounded-full bg-[#c9b99f]" /> Not joined</>
+                            ? <><Check className="w-3 h-3" /> {t('eventModal.youAreGoing')}</>
+                            : <><span className="w-1.5 h-1.5 rounded-full bg-[#c9b99f]" /> {t('eventModal.notJoined')}</>
                           }
                         </div>
                       )}
@@ -342,14 +346,14 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                                   onClick={() => setJoiningId(event.id)}
                                   className="flex-1 flex items-center justify-center gap-1.5 text-xs text-white bg-[#5b4cf5] py-2.5 hover:bg-[#4a3dd4] transition-colors font-semibold"
                                 >
-                                  <UserPlus className="w-3 h-3" /> Join event
+                                  <UserPlus className="w-3 h-3" /> {t('eventModal.joinEvent')}
                                 </button>
                               ) : (
                                 <Link
                                   href={`/events/${event.id}`}
                                   className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
                                 >
-                                  Open itinerary
+                                  {t('eventModal.openItinerary')}
                                 </Link>
                               )}
                             </div>
@@ -360,12 +364,12 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                         if (confirmDelete === event.id) {
                           return (
                             <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-50 border-t border-red-100">
-                              <span className="text-xs text-red-600 flex-1">Delete this event?</span>
+                              <span className="text-xs text-red-600 flex-1">{t('eventModal.deleteThis')}</span>
                               <button onClick={() => handleDelete(event.id)} disabled={deleting}
                                 className="text-xs font-medium text-white bg-red-500 px-2.5 py-1 rounded-full">
-                                {deleting ? '…' : 'Yes'}
+                                {deleting ? '…' : t('eventModal.yes')}
                               </button>
-                              <button onClick={() => setConfirmDelete(null)} className="text-xs text-[#9c8b75] px-2 py-1">Cancel</button>
+                              <button onClick={() => setConfirmDelete(null)} className="text-xs text-[#9c8b75] px-2 py-1">{t('common.cancel')}</button>
                             </div>
                           )
                         }
@@ -378,13 +382,13 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                                 href={`/events/${event.id}`}
                                 className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
                               >
-                                Itinerary
+                                {t('eventModal.itinerary')}
                               </Link>
                               <button
                                 onClick={() => setJoiningId(event.id)}
                                 className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium border-l border-[#ede8e0]"
                               >
-                                <CalendarDays className="w-3 h-3" /> My dates
+                                <CalendarDays className="w-3 h-3" /> {t('eventModal.myDates')}
                               </button>
                               <button
                                 onClick={() => handleLeave(event.id)}
@@ -392,7 +396,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                                 className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#e8724a] py-2.5 hover:bg-[#fdf0ea] transition-colors border-l border-[#ede8e0]"
                               >
                                 <UserMinus className="w-3 h-3" />
-                                {leavingId === event.id ? '…' : 'Leave'}
+                                {leavingId === event.id ? '…' : t('eventModal.leave')}
                               </button>
                             </div>
                           )
@@ -405,19 +409,19 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                               href={`/events/${event.id}`}
                               className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium"
                             >
-                              Itinerary
+                              {t('eventModal.itinerary')}
                             </Link>
                             <button
                               onClick={() => setEditingId(event.id)}
                               className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#5b4cf5] py-2.5 hover:bg-[#f3efe8] transition-colors font-medium border-l border-[#ede8e0]"
                             >
-                              <Pencil className="w-3 h-3" /> Edit
+                              <Pencil className="w-3 h-3" /> {t('eventModal.edit')}
                             </button>
                             <button
                               onClick={() => setConfirmDelete(event.id)}
                               className="flex-1 flex items-center justify-center gap-1.5 text-xs text-[#e8724a] py-2.5 hover:bg-[#fdf0ea] transition-colors border-l border-[#ede8e0]"
                             >
-                              <Trash2 className="w-3 h-3" /> Delete
+                              <Trash2 className="w-3 h-3" /> {t('eventModal.delete')}
                             </button>
                           </div>
                         )
@@ -432,7 +436,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
               onClick={() => setCreating(true)}
               className="w-full mt-1 flex items-center justify-center gap-2 bg-[#5b4cf5] hover:bg-[#4a3dd4] text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
             >
-              <Plus className="w-4 h-4" /> Add event on this day
+              <Plus className="w-4 h-4" /> {t('eventModal.addOnDay')}
             </button>
           </>
         )}

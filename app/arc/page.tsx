@@ -9,6 +9,7 @@ import { getAllEvents, getPeople } from '@/lib/queries'
 import { Person, EventWithDetails } from '@/lib/supabase'
 import { BarChart2 } from 'lucide-react'
 import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
+import { useT } from '@/lib/i18n'
 import { parseISO, format, eachMonthOfInterval, startOfMonth, endOfMonth,
   differenceInCalendarDays, isToday, addDays } from 'date-fns'
 
@@ -29,6 +30,7 @@ function buildDayAxis(minDate: Date, maxDate: Date) {
 
 function ArcContent() {
   const router = useRouter()
+  const { t } = useT()
   const [people, setPeople] = useState<Person[]>([])
   const [events, setEvents] = useState<EventWithDetails[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,9 +71,9 @@ function ArcContent() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6 text-center flex flex-col items-center gap-3 py-20">
         <BarChart2 className="w-10 h-10 text-[#c9b99f]" />
-        <p className="text-sm text-[#9c8b75]">No events yet — create some to see the arc.</p>
+        <p className="text-sm text-[#9c8b75]">{t('arc.noEvents')}</p>
         <Link href="/events/new" className="text-xs font-medium text-[#5b4cf5] hover:underline">
-          Create first event →
+          {t('arc.createFirst')}
         </Link>
       </div>
     )
@@ -101,9 +103,9 @@ function ArcContent() {
       {/* Page header */}
       <div className="px-5 py-3 border-b border-[#ede8e0] bg-white flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-semibold text-[#1a1614]">Trip Arc</h1>
+          <h1 className="text-sm font-semibold text-[#1a1614]">{t('arc.pageTitle')}</h1>
           <p className="text-xs text-[#9c8b75]">{format(minDate, 'MMM d')} – {format(maxDate, 'MMM d, yyyy')}</p>
-          <p className="text-[10px] text-[#c9b99f] mt-0.5">Each row = a person · Each bar = a trip · Purple line = today</p>
+          <p className="text-[10px] text-[#c9b99f] mt-0.5">{t('arc.legend')}</p>
         </div>
         <button
           onClick={() => setColorMode((m) => m === 'person' ? 'location' : 'person')}
@@ -111,7 +113,7 @@ function ArcContent() {
             colorMode === 'location' ? 'bg-[#e8724a] text-white' : 'bg-[#f3efe8] text-[#9c8b75] hover:bg-[#ede8e0]'
           }`}
         >
-          {colorMode === 'location' ? 'by place' : 'by person'}
+          {colorMode === 'location' ? t('arc.byPlace') : t('arc.byPerson')}
         </button>
       </div>
 

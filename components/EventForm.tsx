@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { getLocationIcon, LOCATION_ICON_OPTIONS } from '@/lib/locationIcons'
 import { Eye, EyeOff } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 interface EventFormProps {
   existing?: EventWithDetails
@@ -21,6 +22,7 @@ interface EventFormProps {
 
 export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, onCancel }: EventFormProps) {
   const router = useRouter()
+  const { t } = useT()
   const [people, setPeople] = useState<Person[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(true)
@@ -150,16 +152,16 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
   const selectedLocation = locations.find((l) => l.id === locationId)
   const isValencia = selectedLocation?.name.toLowerCase() === 'valencia'
 
-  if (loading) return <div className="text-center text-[#9c8b75] py-8 text-sm">Loading…</div>
+  if (loading) return <div className="text-center text-[#9c8b75] py-8 text-sm">{t('eventForm.loading')}</div>
 
   return (
     <div className="space-y-5">
       {/* Title */}
       <div>
-        <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">Title</label>
+        <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">{t('eventForm.title')}</label>
         <input
           type="text"
-          placeholder="e.g. Mum visits Valencia"
+          placeholder={t('eventForm.titlePlaceholder')}
           value={title}
           autoFocus
           onChange={(e) => setTitle(e.target.value)}
@@ -169,7 +171,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
 
       {/* Location */}
       <div>
-        <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">Location</label>
+        <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">{t('eventForm.location')}</label>
         <div className="flex gap-2">
           <div className="relative flex-1">
             {selectedLocation && (
@@ -193,7 +195,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
               onClick={() => setAddingLocation(true)}
               className="text-xs text-[#5b4cf5] border border-dashed border-[#5b4cf5]/30 rounded-xl px-3 hover:bg-[#5b4cf5]/5 transition-colors whitespace-nowrap"
             >
-              + New place
+              {t('eventForm.newPlace')}
             </button>
           )}
         </div>
@@ -203,7 +205,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
             <input
               autoFocus
               type="text"
-              placeholder="Place name"
+              placeholder={t('eventForm.placeName')}
               value={newLocationName}
               onChange={(e) => setNewLocationName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddLocation()}
@@ -224,8 +226,8 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
               ))}
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAddLocation} disabled={!newLocationName.trim()}>Add place</Button>
-              <Button size="sm" variant="outline" onClick={() => setAddingLocation(false)}>Cancel</Button>
+              <Button size="sm" onClick={handleAddLocation} disabled={!newLocationName.trim()}>{t('eventForm.addPlace')}</Button>
+              <Button size="sm" variant="outline" onClick={() => setAddingLocation(false)}>{t('common.cancel')}</Button>
             </div>
           </div>
         )}
@@ -234,7 +236,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
       {/* Dates */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">From</label>
+          <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">{t('eventForm.from')}</label>
           <input
             type="date"
             value={startDate}
@@ -243,7 +245,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">To</label>
+          <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">{t('eventForm.to')}</label>
           <input
             type="date"
             value={endDate}
@@ -256,7 +258,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
 
       {/* Participants */}
       <div>
-        <label className="text-xs font-medium text-[#9c8b75] block mb-2">Who is going?</label>
+        <label className="text-xs font-medium text-[#9c8b75] block mb-2">{t('eventForm.whoGoing')}</label>
         <div className="flex flex-wrap gap-2">
           {people.map((p) => {
             const checked = selectedPeople.has(p.id)
@@ -282,7 +284,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
 
         {isValencia && selectedPeople.size > 0 && (
           <div className="mt-3 p-3 bg-[#5b4cf5]/5 rounded-xl border border-[#5b4cf5]/10">
-            <p className="text-xs font-medium text-[#5b4cf5] mb-2">Staying at the apartment?</p>
+            <p className="text-xs font-medium text-[#5b4cf5] mb-2">{t('eventForm.stayingAtApt')}</p>
             <div className="flex flex-wrap gap-2">
               {Array.from(selectedPeople).map((id) => {
                 const p = people.find((x) => x.id === id)
@@ -314,7 +316,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
         <div className="flex items-center justify-between mb-2">
           <label className="text-xs font-medium text-[#9c8b75] flex items-center gap-1.5">
             {visibility === 'all' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            Who can see this event?
+            {t('eventForm.visibility')}
           </label>
           <div className="flex items-center bg-[#f3efe8] rounded-full p-0.5">
             {(['all', 'selected'] as const).map((v) => (
@@ -323,7 +325,7 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
                 onClick={() => setVisibility(v)}
                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors ${visibility === v ? 'bg-white text-[#1a1614] shadow-sm' : 'text-[#9c8b75]'}`}
               >
-                {v === 'all' ? 'Everyone' : 'Selected'}
+                {v === 'all' ? t('eventForm.everyone') : t('eventForm.selected')}
               </button>
             ))}
           </div>
@@ -347,16 +349,16 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
                 </button>
               )
             })}
-            <p className="w-full text-[10px] text-[#9c8b75] mt-1">Only selected people will see this on their calendar.</p>
+            <p className="w-full text-[10px] text-[#9c8b75] mt-1">{t('eventForm.onlySelected')}</p>
           </div>
         )}
       </div>
 
       {/* Notes */}
       <div>
-        <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">Notes</label>
+        <label className="text-xs font-medium text-[#9c8b75] block mb-1.5">{t('eventForm.notes')}</label>
         <Textarea
-          placeholder="Flight info, address, anything useful..."
+          placeholder={t('eventForm.notesPlaceholder')}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
@@ -371,26 +373,26 @@ export function EventForm({ existing, defaultDate, defaultEndDate, onSuccess, on
           disabled={!title.trim() || !locationId || !startDate || !endDate || saving}
           className="flex-1 bg-[#5b4cf5] hover:bg-[#4a3dd4]"
         >
-          {saving ? 'Saving…' : existing ? 'Save changes' : 'Create event'}
+          {saving ? t('common.saving') : existing ? t('eventForm.saveChanges') : t('eventForm.createEvent')}
         </Button>
-        <Button variant="outline" onClick={handleCancel} className="border-[#ede8e0] text-[#9c8b75]">Cancel</Button>
+        <Button variant="outline" onClick={handleCancel} className="border-[#ede8e0] text-[#9c8b75]">{t('common.cancel')}</Button>
       </div>
 
       {existing && (
         <div className="pt-1">
           {confirmDelete ? (
             <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl">
-              <span className="text-sm text-red-600 flex-1">Delete this event?</span>
+              <span className="text-sm text-red-600 flex-1">{t('eventForm.deleteConfirm')}</span>
               <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleting}
                 className="text-red-600 border-red-200 hover:bg-red-100">
-                {deleting ? '…' : 'Yes, delete'}
+                {deleting ? '…' : t('eventForm.yesDelete')}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>{t('common.cancel')}</Button>
             </div>
           ) : (
             <button onClick={() => setConfirmDelete(true)}
               className="w-full text-sm text-red-400 hover:text-red-600 py-2 transition-colors">
-              Delete event
+              {t('eventForm.deleteEvent')}
             </button>
           )}
         </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Poll, toggleVote, getPollsForEvent, getPollsForGroup } from '@/lib/pollQueries'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { BarChart2 } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 interface PollCardProps {
   poll: Poll
@@ -12,6 +13,7 @@ interface PollCardProps {
 }
 
 export function PollCard({ poll, currentPersonId, onRefresh }: PollCardProps) {
+  const { t } = useT()
   const [voting, setVoting] = useState(false)
   const totalVotes = poll.votes.length
   const myVote = currentPersonId ? poll.votes.find((v) => v.person_id === currentPersonId) : null
@@ -34,7 +36,11 @@ export function PollCard({ poll, currentPersonId, onRefresh }: PollCardProps) {
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-[#1a1614] leading-snug">{poll.question}</p>
           <p className="text-[10px] text-[#9c8b75] mt-0.5">
-            {totalVotes} vote{totalVotes !== 1 ? 's' : ''} · {formatDistanceToNow(parseISO(poll.created_at), { addSuffix: true })}
+            {totalVotes === 1
+              ? t('polls.voteSingular', { count: totalVotes })
+              : t('polls.votePlural',   { count: totalVotes })}
+            {' · '}
+            {formatDistanceToNow(parseISO(poll.created_at), { addSuffix: true })}
           </p>
         </div>
       </div>
@@ -85,6 +91,7 @@ interface PollCreatorProps {
 }
 
 export function PollCreator({ currentPersonId, eventId, groupId, onCreated }: PollCreatorProps) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
@@ -112,7 +119,7 @@ export function PollCreator({ currentPersonId, eventId, groupId, onCreated }: Po
         onClick={() => setOpen(true)}
         className="flex items-center gap-1 text-[11px] text-[#9c8b75] hover:text-[#5b4cf5] transition-colors"
       >
-        <BarChart2 className="w-3 h-3" /> Add poll
+        <BarChart2 className="w-3 h-3" /> {t('polls.addPoll')}
       </button>
     )
   }
@@ -122,7 +129,7 @@ export function PollCreator({ currentPersonId, eventId, groupId, onCreated }: Po
       <input
         autoFocus
         type="text"
-        placeholder="Poll question…"
+        placeholder={t('polls.pollQuestion')}
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         className="w-full bg-white border border-[#ede8e0] rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30"
@@ -131,7 +138,7 @@ export function PollCreator({ currentPersonId, eventId, groupId, onCreated }: Po
         <input
           key={i}
           type="text"
-          placeholder={`Option ${i + 1}`}
+          placeholder={t('polls.optionPlaceholder', { n: i + 1 })}
           value={opt}
           onChange={(e) => setOptions((prev) => prev.map((o, j) => j === i ? e.target.value : o))}
           className="w-full bg-white border border-[#ede8e0] rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#5b4cf5]/30"
@@ -139,7 +146,7 @@ export function PollCreator({ currentPersonId, eventId, groupId, onCreated }: Po
       ))}
       {options.length < 5 && (
         <button onClick={() => setOptions((o) => [...o, ''])} className="text-[11px] text-[#9c8b75] hover:text-[#5b4cf5] transition-colors">
-          + Add option
+          {t('polls.addOption')}
         </button>
       )}
       <div className="flex gap-2 pt-1">
@@ -148,10 +155,10 @@ export function PollCreator({ currentPersonId, eventId, groupId, onCreated }: Po
           disabled={saving || !question.trim() || options.filter((o) => o.trim()).length < 2}
           className="flex-1 bg-[#5b4cf5] text-white text-xs font-medium py-2 rounded-xl disabled:opacity-40 hover:bg-[#4a3dd4] transition-colors"
         >
-          {saving ? 'Creating…' : 'Create poll'}
+          {saving ? t('polls.creating') : t('polls.createPoll')}
         </button>
         <button onClick={() => setOpen(false)} className="text-xs text-[#9c8b75] px-3 border border-[#ede8e0] rounded-xl bg-white">
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </div>

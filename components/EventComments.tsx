@@ -13,6 +13,7 @@ import { formatDistanceToNow, parseISO } from 'date-fns'
 import { ThumbsUp, Heart, HelpCircle, Clock, PartyPopper, Send } from 'lucide-react'
 import { PollCard, PollCreator } from './PollCard'
 import { Poll, getPollsForEvent } from '@/lib/pollQueries'
+import { useT } from '@/lib/i18n'
 
 const REACTIONS = [
   { key: 'thumbs-up', Icon: ThumbsUp },
@@ -28,6 +29,7 @@ interface EventCommentsProps {
 }
 
 export function EventComments({ eventId, currentPerson }: EventCommentsProps) {
+  const { t } = useT()
   const [comments, setComments] = useState<EventComment[]>([])
   const [reactions, setReactions] = useState<EventReaction[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
@@ -145,7 +147,7 @@ export function EventComments({ eventId, currentPerson }: EventCommentsProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Add a comment…"
+              placeholder={t('comments.addComment')}
               className="flex-1 bg-transparent text-xs text-[#1a1614] outline-none placeholder:text-[#9c8b75]"
             />
             <button

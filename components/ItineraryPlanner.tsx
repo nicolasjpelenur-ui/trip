@@ -33,6 +33,7 @@ import {
   updateItineraryItem,
 } from '@/lib/itineraryQueries'
 import { supabase } from '@/lib/supabase'
+import { useT } from '@/lib/i18n'
 
 const emptyInput: ItineraryItemInput = {
   title: '',
@@ -58,10 +59,10 @@ function cleanInput(input: ItineraryItemInput): ItineraryItemInput {
   }
 }
 
-function formatTimeRange(item: ItineraryItem) {
+function formatTimeRange(item: ItineraryItem): string | null {
   if (item.start_time && item.end_time) return `${item.start_time.slice(0, 5)} - ${item.end_time.slice(0, 5)}`
   if (item.start_time) return item.start_time.slice(0, 5)
-  return 'Flexible'
+  return null
 }
 
 function normalizeUrl(url: string | null) {
@@ -85,6 +86,7 @@ function ItineraryItemForm({
   onCancel: () => void
   saving: boolean
 }) {
+  const { t } = useT()
   const [input, setInput] = useState<ItineraryItemInput>(() => initial ? cleanInput({
     title: initial.title,
     start_time: initial.start_time,
@@ -108,20 +110,20 @@ function ItineraryItemForm({
           autoFocus
           value={input.title}
           onChange={(event) => setField('title', event.target.value)}
-          placeholder="Activity"
+          placeholder={t('itinerary.activity')}
           className="min-h-10 rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
         />
         <input
           type="time"
           value={input.start_time ?? ''}
           onChange={(event) => setField('start_time', event.target.value)}
-          aria-label="Start time"
+          aria-label={t('itinerary.startTime')}
           className="min-h-10 rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
         />
         <input
           value={input.place_name ?? ''}
           onChange={(event) => setField('place_name', event.target.value)}
-          placeholder="Place"
+          placeholder={t('itinerary.place')}
           className="min-h-10 rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
         />
       </div>
@@ -132,31 +134,31 @@ function ItineraryItemForm({
             type="time"
             value={input.end_time ?? ''}
             onChange={(event) => setField('end_time', event.target.value)}
-            aria-label="End time"
+            aria-label={t('itinerary.endTime')}
             className="min-h-10 rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
           />
           <input
             value={input.city ?? ''}
             onChange={(event) => setField('city', event.target.value)}
-            placeholder="City"
+            placeholder={t('itinerary.city')}
             className="min-h-10 rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
           />
           <input
             value={input.address ?? ''}
             onChange={(event) => setField('address', event.target.value)}
-            placeholder="Address"
+            placeholder={t('itinerary.address')}
             className="min-h-10 rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
           />
           <input
             value={input.url ?? ''}
             onChange={(event) => setField('url', event.target.value)}
-            placeholder="Link"
+            placeholder={t('itinerary.link')}
             className="min-h-10 rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
           />
           <textarea
             value={input.notes ?? ''}
             onChange={(event) => setField('notes', event.target.value)}
-            placeholder="Notes"
+            placeholder={t('itinerary.notes')}
             rows={2}
             className="resize-none rounded-lg border border-[#e8e0d6] bg-white px-3 py-2 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15 sm:col-span-2"
           />
@@ -170,7 +172,7 @@ function ItineraryItemForm({
           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-[#776956] hover:bg-[#f3efe8]"
         >
           {showDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-          {showDetails ? 'Hide details' : 'More details'}
+          {showDetails ? t('itinerary.hideDetails') : t('itinerary.moreDetails')}
         </button>
         <div className="flex gap-2">
           <button
@@ -180,7 +182,7 @@ function ItineraryItemForm({
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#5b4cf5] px-3 py-2 text-xs font-medium text-white hover:bg-[#4a3dd4] disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
-            {saving ? 'Saving' : initial ? 'Save' : 'Add'}
+            {saving ? t('itinerary.saving') : initial ? t('itinerary.save') : t('itinerary.add')}
           </button>
           <button
             type="button"
@@ -188,7 +190,7 @@ function ItineraryItemForm({
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#e8e0d6] bg-white px-3 py-2 text-xs font-medium text-[#776956] hover:bg-[#f3efe8]"
           >
             <X className="h-3.5 w-3.5" />
-            Cancel
+            {t('common.cancel')}
           </button>
         </div>
       </div>
@@ -207,6 +209,7 @@ function DayNotesEditor({
   onSave: (title: string, notes: string) => void
   onCancel: () => void
 }) {
+  const { t } = useT()
   const [title, setTitle] = useState(day.title ?? '')
   const [notes, setNotes] = useState(day.notes ?? '')
 
@@ -215,13 +218,13 @@ function DayNotesEditor({
       <input
         value={title}
         onChange={(event) => setTitle(event.target.value)}
-        placeholder="Day focus, e.g. Arrival and dinner"
+        placeholder={t('itinerary.dayFocusPlaceholder')}
         className="min-h-10 w-full rounded-lg border border-[#e8e0d6] bg-white px-3 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
       />
       <textarea
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
-        placeholder="Day notes"
+        placeholder={t('itinerary.dayNotesPlaceholder')}
         rows={2}
         className="mt-2 w-full resize-none rounded-lg border border-[#e8e0d6] bg-white px-3 py-2 text-sm outline-none focus:border-[#5b4cf5] focus:ring-2 focus:ring-[#5b4cf5]/15"
       />
@@ -232,14 +235,14 @@ function DayNotesEditor({
           disabled={saving}
           className="rounded-lg bg-[#5b4cf5] px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
         >
-          Save day
+          {t('itinerary.saveDay')}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="rounded-lg border border-[#e8e0d6] bg-white px-3 py-2 text-xs font-medium text-[#776956]"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </div>
@@ -273,9 +276,11 @@ function ItineraryItemRow({
   onDelete: () => void
   onMove: (direction: -1 | 1) => void
 }) {
+  const { t } = useT()
   const [expanded, setExpanded] = useState(false)
   const url = normalizeUrl(item.url)
   const detailCount = [item.address, item.url, item.notes].filter(Boolean).length
+  const timeRange = formatTimeRange(item)
 
   if (editing) {
     return (
@@ -293,7 +298,7 @@ function ItineraryItemRow({
       <div className="flex items-start gap-3">
         <div className="w-[76px] flex-shrink-0">
           <span className={`inline-flex max-w-full rounded-md px-2 py-1 text-[11px] font-medium ${item.start_time ? 'bg-[#5b4cf5]/10 text-[#4a3dd4]' : 'bg-[#f3efe8] text-[#776956]'}`}>
-            {formatTimeRange(item)}
+            {timeRange ?? t('itinerary.flexible')}
           </span>
         </div>
 
@@ -314,7 +319,6 @@ function ItineraryItemRow({
               type="button"
               onClick={() => onMove(-1)}
               disabled={index === 0}
-              aria-label="Move activity earlier"
               className="rounded-md p-1 hover:bg-[#f3efe8] hover:text-[#5b4cf5] disabled:opacity-25"
             >
               <ArrowUp className="h-3.5 w-3.5" />
@@ -323,7 +327,6 @@ function ItineraryItemRow({
               type="button"
               onClick={() => onMove(1)}
               disabled={index === count - 1}
-              aria-label="Move activity later"
               className="rounded-md p-1 hover:bg-[#f3efe8] hover:text-[#5b4cf5] disabled:opacity-25"
             >
               <ArrowDown className="h-3.5 w-3.5" />
@@ -331,7 +334,7 @@ function ItineraryItemRow({
             <button
               type="button"
               onClick={onEdit}
-              aria-label="Edit activity"
+              aria-label={t('common.edit')}
               className="rounded-md p-1 hover:bg-[#f3efe8] hover:text-[#5b4cf5]"
             >
               <Edit3 className="h-3.5 w-3.5" />
@@ -339,7 +342,7 @@ function ItineraryItemRow({
             <button
               type="button"
               onClick={onDelete}
-              aria-label="Delete activity"
+              aria-label={t('common.delete')}
               className="rounded-md p-1 hover:bg-[#fdf0ea] hover:text-[#c84e32]"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -356,7 +359,7 @@ function ItineraryItemRow({
             className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-[#776956] hover:bg-[#f3efe8]"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
-            {expanded ? 'Hide details' : `${detailCount} detail${detailCount === 1 ? '' : 's'}`}
+            {expanded ? t('itinerary.hideDetails') : `${detailCount} ${detailCount === 1 ? t('itinerary.detail') : t('itinerary.details')}`}
           </button>
 
           {expanded && (
@@ -371,7 +374,7 @@ function ItineraryItemRow({
               {url && (
                 <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium text-[#5b4cf5] hover:underline">
                   <LinkIcon className="h-3.5 w-3.5" />
-                  Open link
+                  {t('itinerary.openLink')}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               )}
@@ -384,6 +387,7 @@ function ItineraryItemRow({
 }
 
 export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: EventWithDetails; canEdit: boolean; currentPersonId: string | null }) {
+  const { t } = useT()
   const [days, setDays] = useState<ItineraryDayWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -401,7 +405,7 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
       setDays(itinerary)
     } catch (loadError) {
       console.error('Itinerary load error:', loadError)
-      setError('The itinerary could not be loaded. Refresh or try again in a moment.')
+      setError(t('itinerary.loadError'))
     } finally {
       setLoading(false)
     }
@@ -437,7 +441,7 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
       await loadItinerary()
     } catch (mutationError) {
       console.error('Itinerary save error:', mutationError)
-      setError('That change could not be saved. Please try again.')
+      setError(t('itinerary.saveError'))
     } finally {
       setSaving(false)
     }
@@ -500,12 +504,18 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
       <div className="rounded-xl border border-[#e8e0d6] bg-white p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-[#776956]">Trip plan</p>
-            <h2 className="text-lg font-semibold text-[#1a1614]">{itemCount} planned item{itemCount === 1 ? '' : 's'}</h2>
+            <p className="text-xs font-medium text-[#776956]">{t('itinerary.tripPlan')}</p>
+            <h2 className="text-lg font-semibold text-[#1a1614]">
+              {itemCount === 1
+                ? t('itinerary.plannedItem',       { count: itemCount })
+                : t('itinerary.plannedItemPlural', { count: itemCount })}
+            </h2>
           </div>
           <div className="inline-flex items-center gap-2 rounded-lg bg-[#f3efe8] px-3 py-2 text-xs font-medium text-[#776956]">
             <CalendarDays className="h-4 w-4" />
-            {days.length} day{days.length === 1 ? '' : 's'}
+            {days.length === 1
+              ? t('itinerary.daySingular', { count: days.length })
+              : t('itinerary.dayPlural',   { count: days.length })}
           </div>
         </div>
         {error && (
@@ -527,7 +537,7 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
             <div className="border-b border-[#e8e0d6] bg-white p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-[#776956]">Day {dayIndex + 1}</p>
+                  <p className="text-xs font-medium text-[#776956]">{t('itinerary.dayLabel', { n: dayIndex + 1 })}</p>
                   <h3 className="mt-0.5 text-base font-semibold text-[#1a1614]">
                     {format(parseISO(day.day_date), 'EEEE, MMM d')}
                   </h3>
@@ -540,7 +550,7 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
                       onClick={() => setEditingDayId(editingDay ? null : day.id)}
                       className="rounded-lg px-2 py-1.5 text-xs font-medium text-[#776956] hover:bg-[#f3efe8] hover:text-[#1a1614]"
                     >
-                      {editingDay ? 'Close' : 'Day note'}
+                      {editingDay ? t('itinerary.closeNote') : t('itinerary.dayNote')}
                     </button>
                     <button
                       type="button"
@@ -548,7 +558,7 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
                       className="inline-flex items-center gap-1.5 rounded-lg bg-[#5b4cf5] px-3 py-2 text-xs font-medium text-white hover:bg-[#4a3dd4]"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      Add
+                      {t('itinerary.add')}
                     </button>
                   </div>
                 )}
@@ -582,7 +592,7 @@ export function ItineraryPlanner({ event, canEdit, currentPersonId }: { event: E
               {ordered.length === 0 ? (
                 <div className="flex items-center gap-3 bg-white px-4 py-5 text-sm text-[#776956]">
                   <Clock className="h-4 w-4 flex-shrink-0 text-[#b7a78f]" />
-                  <span>{canEdit ? 'Add the first activity when you know the plan.' : 'No activities planned yet.'}</span>
+                  <span>{canEdit ? t('itinerary.addFirst') : t('itinerary.noActivities')}</span>
                 </div>
               ) : (
                 ordered.map((item, itemIndex) => (

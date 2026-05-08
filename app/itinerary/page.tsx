@@ -16,6 +16,7 @@ import { getEventItinerary } from '@/lib/itineraryQueries'
 import { EventWithDetails, ItineraryDayWithItems, Person } from '@/lib/supabase'
 import { canSeeEvent, today } from '@/lib/eventUtils'
 import { createElement } from 'react'
+import { useT } from '@/lib/i18n'
 
 function eventStatus(event: EventWithDetails) {
   const t = today()
@@ -154,6 +155,7 @@ function ItineraryCard({ event, currentPersonId }: { event: EventWithDetails; cu
 }
 
 function ItineraryContent() {
+  const { t: dt } = useT()
   const router = useRouter()
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
   const [myEvents, setMyEvents] = useState<EventWithDetails[]>([])
@@ -218,18 +220,18 @@ function ItineraryContent() {
           <Map className="w-5 h-5 text-[#e8724a]" />
         </span>
         <div>
-          <h1 className="text-2xl font-bold text-[#1a1614] font-display">My Itineraries</h1>
-          <p className="text-sm text-[#9c8b75]">Events you are part of — tap to see the day-by-day plan</p>
+          <h1 className="text-2xl font-bold text-[#1a1614] font-display">{dt('itinerary.pageTitle')}</h1>
+          <p className="text-sm text-[#9c8b75]">{dt('itinerary.pageSubtitle')}</p>
         </div>
       </div>
 
       {myEvents.length === 0 ? (
         <div className="text-center py-16">
           <Map className="w-12 h-12 text-[#c9b99f] mx-auto mb-3" />
-          <h2 className="text-base font-semibold text-[#1a1614]">No events yet</h2>
-          <p className="text-sm text-[#9c8b75] mt-1 mb-4">Create an event on the calendar and start filling in the itinerary.</p>
+          <h2 className="text-base font-semibold text-[#1a1614]">{dt('itinerary.noEvents')}</h2>
+          <p className="text-sm text-[#9c8b75] mt-1 mb-4">{dt('itinerary.noEventsHint')}</p>
           <Link href="/calendar" className="inline-flex items-center gap-1.5 bg-[#5b4cf5] text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-[#4a3dd4]">
-            <CalendarDays className="w-4 h-4" /> Go to calendar
+            <CalendarDays className="w-4 h-4" /> {dt('itinerary.goCalendar')}
           </Link>
         </div>
       ) : (
@@ -237,7 +239,7 @@ function ItineraryContent() {
           {upcoming.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider whitespace-nowrap">Upcoming & in progress</h2>
+                <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider whitespace-nowrap">{dt('itinerary.upcomingHeader')}</h2>
                 <div className="flex-1 h-px bg-[#ede8e0]" />
               </div>
               {upcoming.map((event) => (
@@ -248,7 +250,7 @@ function ItineraryContent() {
           {past.length > 0 && (
             <div className="space-y-3 mt-4">
               <div className="flex items-center gap-3">
-                <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider whitespace-nowrap">Past events</h2>
+                <h2 className="text-xs font-semibold text-[#9c8b75] uppercase tracking-wider whitespace-nowrap">{dt('itinerary.pastHeader')}</h2>
                 <div className="flex-1 h-px bg-[#ede8e0]" />
               </div>
               {past.map((event) => (

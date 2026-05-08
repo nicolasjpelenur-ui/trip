@@ -8,9 +8,11 @@ import { MessageBubble } from './MessageBubble'
 import { MessageSquare, Send, BarChart2 } from 'lucide-react'
 import { PollCard, PollCreator } from './PollCard'
 import { Poll, getPollsForGroup } from '@/lib/pollQueries'
+import { useT } from '@/lib/i18n'
 
 function DateSeparator({ date }: { date: Date }) {
-  const label = isToday(date) ? 'Today' : format(date, 'EEE, MMM d')
+  const { t } = useT()
+  const label = isToday(date) ? t('chatRoom.today') : format(date, 'EEE, MMM d')
   return (
     <div className="flex items-center gap-3 py-2 select-none">
       <div className="flex-1 h-px bg-[#ede8e0]" />
@@ -26,6 +28,7 @@ interface ChatRoomProps {
 }
 
 export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
+  const { t } = useT()
   const [messages, setMessages] = useState<Message[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
   const [showPollCreator, setShowPollCreator] = useState(false)
@@ -120,8 +123,8 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
               <MessageSquare className="w-6 h-6 text-[#c9b99f]" />
             </div>
             <div>
-              <div className="font-medium text-[#1a1614]">No messages yet</div>
-              <div className="text-xs mt-0.5">Start the conversation below</div>
+              <div className="font-medium text-[#1a1614]">{t('chatRoom.noMessages')}</div>
+              <div className="text-xs mt-0.5">{t('chatRoom.startConvo')}</div>
             </div>
           </div>
         )}
@@ -149,7 +152,7 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
         <div className="flex items-end gap-2">
           <button
             onClick={() => setShowPollCreator((v) => !v)}
-            title="Add poll"
+            title={t('chatRoom.addPoll')}
             className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border transition-colors ${showPollCreator ? 'bg-[#5b4cf5] border-[#5b4cf5] text-white' : 'border-[#ede8e0] text-[#9c8b75] hover:border-[#5b4cf5] hover:text-[#5b4cf5]'}`}
           >
             <BarChart2 className="w-4 h-4" />
@@ -160,7 +163,7 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
             }}
-            placeholder="Type a message…"
+            placeholder={t('chatRoom.typeMessage')}
             rows={1}
             className="flex-1 resize-none border border-[#ede8e0] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5b4cf5]/30 focus:border-[#5b4cf5] bg-[#faf7f2] text-[#1a1614] placeholder:text-[#9c8b75] max-h-28"
           />
