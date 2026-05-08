@@ -125,6 +125,49 @@ const en = {
     installLater: 'Later',
     iosHint: 'On iPhone: tap Share, then "Add to Home Screen".',
   },
+  onboarding: {
+    step: 'Step {current} of {total}',
+    closeGuide: 'Close guide',
+    gotIt: 'Got it',
+    allSet: 'You are all set',
+    createFirst: 'Create your first event',
+    welcome: {
+      title: 'Welcome',
+      titleNamed: 'Welcome, {name}',
+      body: 'A quiet, shared space for your circle. Plan trips together, see who is where, and stay close between visits.',
+      tip: 'This guide takes about a minute.',
+    },
+    dashboard: {
+      title: 'Your home screen',
+      body: 'Open the app here. You will see the next trip, days until it starts, latest messages, and any votes waiting on you.',
+      tip: 'A daily summary at a glance.',
+    },
+    calendar: {
+      title: 'The calendar',
+      body: 'See everyone\'s trips on one calendar. To create a multi-day event, drag across the days you want — tapping just one day makes a one-day event.',
+      tip: 'Drag across days for a longer trip.',
+    },
+    events: {
+      title: 'Trip events',
+      body: 'Each trip is an event. Add who is joining, who is sleeping at the apartment, and notes. Each person can join for the full stay or just their dates.',
+      tip: 'Open an event to see its full itinerary.',
+    },
+    itinerary: {
+      title: 'Day-by-day itinerary',
+      body: 'Inside each event, plan each day: a restaurant, a flight, a museum, anywhere. Add a time, a place, and an address.',
+      tip: 'Tap Itinerary in the menu to see all your plans.',
+    },
+    chat: {
+      title: 'Group chat & messages',
+      body: 'Talk to the whole group, or send a private message. Tap and hold a message to react.',
+      tip: 'A small orange dot means there are unread messages.',
+    },
+    polls: {
+      title: 'Quick votes',
+      body: 'Cannot agree on a dinner spot or travel date? Create a poll. Results update in real time.',
+      tip: 'Pending polls show up on your Dashboard.',
+    },
+  },
 } as const
 
 export default en

@@ -9,6 +9,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Person } from '@/lib/supabase'
 import { completePersonOnboarding, getPeople } from '@/lib/queries'
+import { useT } from '@/lib/i18n'
 import {
   DemoCalendar, DemoChat, DemoDashboard, DemoEvents,
   DemoItinerary, DemoPolls, DemoWelcome,
@@ -24,66 +25,25 @@ export function openOnboarding() {
 
 interface Slide {
   key: string
-  title: string
-  body: string
-  tip?: string
+  // Translation key root — slide title/body/tip are looked up at render time.
+  // i18n keys live under `onboarding.<key>.{title,body,tip}` in messages/en.ts + es.ts
+  i18n: string
   Demo: ComponentType
 }
 
 const slides: Slide[] = [
-  {
-    key: 'Welcome',
-    title: 'Welcome',
-    body: 'A quiet, shared space for your circle. Plan trips together, see who is where, and stay close between visits.',
-    tip: 'This guide takes about a minute.',
-    Demo: DemoWelcome,
-  },
-  {
-    key: 'Dashboard',
-    title: 'Your home screen',
-    body: 'Open the app here. You will see the next trip, days until it starts, latest messages, and any votes waiting on you.',
-    tip: 'A daily summary at a glance.',
-    Demo: DemoDashboard,
-  },
-  {
-    key: 'Calendar',
-    title: 'The calendar',
-    body: 'See everyone\'s trips on one calendar. To create a multi-day event, drag across the days you want — tapping just one day makes a one-day event.',
-    tip: 'Drag across days for a longer trip.',
-    Demo: DemoCalendar,
-  },
-  {
-    key: 'Events',
-    title: 'Trip events',
-    body: 'Each trip is an event. Add who is joining, who is sleeping at the apartment, and notes. Each person can join for the full stay or just their dates.',
-    tip: 'Open an event to see its full itinerary.',
-    Demo: DemoEvents,
-  },
-  {
-    key: 'Itinerary',
-    title: 'Day-by-day itinerary',
-    body: 'Inside each event, plan each day: a restaurant, a flight, a museum, anywhere. Add a time, a place, and an address.',
-    tip: 'Tap Itinerary in the menu to see all your plans.',
-    Demo: DemoItinerary,
-  },
-  {
-    key: 'Chat',
-    title: 'Group chat & messages',
-    body: 'Talk to the whole group, or send a private message. Tap and hold a message to react.',
-    tip: 'A small orange dot means there are unread messages.',
-    Demo: DemoChat,
-  },
-  {
-    key: 'Polls',
-    title: 'Quick votes',
-    body: 'Cannot agree on a dinner spot or travel date? Create a poll. Results update in real time.',
-    tip: 'Pending polls show up on your Dashboard.',
-    Demo: DemoPolls,
-  },
+  { key: 'Welcome',   i18n: 'welcome',   Demo: DemoWelcome },
+  { key: 'Dashboard', i18n: 'dashboard', Demo: DemoDashboard },
+  { key: 'Calendar',  i18n: 'calendar',  Demo: DemoCalendar },
+  { key: 'Events',    i18n: 'events',    Demo: DemoEvents },
+  { key: 'Itinerary', i18n: 'itinerary', Demo: DemoItinerary },
+  { key: 'Chat',      i18n: 'chat',      Demo: DemoChat },
+  { key: 'Polls',     i18n: 'polls',     Demo: DemoPolls },
 ]
 
 export function OnboardingHost() {
   const pathname = usePathname()
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [manual, setManual] = useState(false)
   const [index, setIndex] = useState(0)
@@ -153,9 +113,12 @@ export function OnboardingHost() {
   const slide = slides[index]
   const Demo = slide.Demo
   const isLast = index === slides.length - 1
+  const slideTitle = t(`onboarding.${slide.i18n}.title`)
+  const slideBody  = t(`onboarding.${slide.i18n}.body`)
+  const slideTip   = t(`onboarding.${slide.i18n}.tip`)
   const displayTitle = slide.key === 'Welcome' && person
-    ? `Welcome, ${person.name.split(' ')[0]}`
-    : slide.title
+    ? t('onboarding.welcome.titleNamed', { name: person.name.split(' ')[0] })
+    : slideTitle
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -167,7 +130,7 @@ export function OnboardingHost() {
 
           {/* Progress dots */}
           <div className="flex items-center justify-between mb-5">
-            <span className="text-xs font-medium text-[#9c8b75]">Step {index + 1} of {slides.length}</span>
+            <span className="text-xs font-medium text-[#9c8b75]">{t('onboarding.step', { current: index + 1, total: slides.length })}</span>
             <div className="flex gap-1.5">
               {slides.map((item, i) => (
                 <button
@@ -185,24 +148,24 @@ export function OnboardingHost() {
             <Demo />
             <div className="mt-5 text-center">
               <h2 className="text-xl font-bold text-[#1a1614] leading-snug">{displayTitle}</h2>
-              <p className="text-sm text-[#6b5d4f] mt-2.5 leading-relaxed max-w-xs mx-auto">{slide.body}</p>
-              {slide.tip && (
+              <p className="text-sm text-[#6b5d4f] mt-2.5 leading-relaxed max-w-xs mx-auto">{slideBody}</p>
+              {slideTip && (
                 <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#5b4cf5] bg-[#5b4cf5]/10 border border-[#5b4cf5]/20 rounded-xl px-3 py-1.5 font-medium">
                   <Lightbulb className="w-3.5 h-3.5" />
-                  {slide.tip}
+                  {slideTip}
                 </p>
               )}
               {isLast && (
                 <div className="mt-4 flex flex-col items-center gap-2.5">
                   <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1a1614]">
                     <Sparkles className="w-4 h-4 text-[#e8724a]" />
-                    You are all set
+                    {t('onboarding.allSet')}
                   </p>
                   <Link
                     href="/events/new"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#e8724a] px-4 py-2 rounded-xl hover:bg-[#d4663f] transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Create your first event
+                    <Plus className="w-3.5 h-3.5" /> {t('onboarding.createFirst')}
                   </Link>
                 </div>
               )}
@@ -217,7 +180,7 @@ export function OnboardingHost() {
               className="inline-flex items-center gap-1 text-sm text-[#9c8b75] disabled:opacity-30 px-2 py-1.5 rounded-lg hover:bg-[#f3efe8] transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
-              Back
+              {t('common.back')}
             </button>
             {isLast ? (
               <button
@@ -226,14 +189,14 @@ export function OnboardingHost() {
                 className="inline-flex items-center gap-1.5 bg-[#5b4cf5] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors"
               >
                 <Check className="w-4 h-4" />
-                {saving ? 'Saving…' : manual ? 'Close guide' : 'Got it'}
+                {saving ? t('common.saving') : manual ? t('onboarding.closeGuide') : t('onboarding.gotIt')}
               </button>
             ) : (
               <button
                 onClick={() => setIndex((v) => Math.min(slides.length - 1, v + 1))}
                 className="inline-flex items-center gap-1.5 bg-[#5b4cf5] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#4a3dd4] transition-colors"
               >
-                Next
+                {t('common.next')}
                 <ChevronRight className="w-4 h-4" />
               </button>
             )}

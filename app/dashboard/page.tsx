@@ -41,6 +41,7 @@ import { getEventItinerary } from '@/lib/itineraryQueries'
 import { canEditEvent, canSeeEvent, eventCountdownLabel, isUpcoming, today } from '@/lib/eventUtils'
 import { ageOnNextBirthday, daysUntilBirthday } from '@/lib/birthdayUtils'
 import { useToast } from '@/components/Toast'
+import { useT } from '@/lib/i18n'
 
 type ChatPreview = {
   group: GroupWithMembers
@@ -167,6 +168,7 @@ function ItineraryWidget({ nextEvent, nextItinerary }: { nextEvent: EventWithDet
 }
 
 function BirthdayBanner({ people }: { people: Person[] }) {
+  const { t: dt } = useT()
   const upcoming = people
     .map((p) => ({ p, days: daysUntilBirthday(p) }))
     .filter((x): x is { p: Person; days: number } => x.days !== null && x.days <= 7)
@@ -196,19 +198,26 @@ function BirthdayBanner({ people }: { people: Person[] }) {
 
   if (!next || dismissed) return null
   const age = ageOnNextBirthday(next.p)
-  const dayLabel = next.days === 0 ? 'today' : next.days === 1 ? 'tomorrow' : `in ${next.days} days`
-  const ageSuffix = age != null && next.days === 0 ? ` (${age})` : age != null ? ` will be ${age}` : ''
+  const firstName = next.p.name.split(' ')[0]
+  const headline =
+    next.days === 0 ? dt('birthday.today',    { name: firstName })
+    : next.days === 1 ? dt('birthday.tomorrow', { name: firstName })
+    : dt('birthday.inDays', { name: firstName, days: next.days })
+  const ageSuffix =
+    age != null && next.days === 0 ? ` (${age})`
+    : age != null ? ' — ' + dt('birthday.willBe', { age })
+    : ''
   return (
-    <div className="relative rounded-2xl bg-gradient-to-r from-[#fdf0ea] to-[#fdf6f0] border border-[#e8724a]/25 px-5 py-3.5 flex items-center gap-3.5">
+    <div className="relative rounded-2xl bg-gradient-to-r from-[#fdf0ea] to-[#fdf6f0] border border-[#e8724a]/25 px-4 sm:px-5 py-3.5 flex items-center gap-3 sm:gap-3.5">
       <div className="w-9 h-9 rounded-xl bg-[#e8724a]/15 flex items-center justify-center flex-shrink-0">
         <Cake className="w-4.5 h-4.5 text-[#e8724a]" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm text-[#1a1614] truncate">
-          {next.p.name.split(' ')[0]}&apos;s birthday is {dayLabel}{ageSuffix}
+          {headline}{ageSuffix}
         </p>
-        <p className="text-xs text-[#9c8b75] mt-0.5">
-          {next.days === 0 ? 'Reach out and make their day a little brighter.' : 'A small heads-up for the group.'}
+        <p className="text-xs text-[#9c8b75] mt-0.5 line-clamp-2">
+          {next.days === 0 ? dt('birthday.todayNudge') : dt('birthday.nudge')}
         </p>
       </div>
       <button
@@ -231,18 +240,18 @@ function CountdownBanner({ event }: { event: EventWithDetails }) {
   const days = differenceInCalendarDays(parseISO(event.start_date), new Date())
   const label = days === 0 ? 'starts today!' : `starts in ${days} day${days === 1 ? '' : 's'}!`
   return (
-    <div className="relative rounded-2xl bg-gradient-to-r from-[#5b4cf5] to-[#7c6cf7] text-white px-5 py-4 flex items-center gap-4">
+    <div className="relative rounded-2xl bg-gradient-to-r from-[#5b4cf5] to-[#7c6cf7] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4">
       <span className="inline-flex rounded-full h-2.5 w-2.5 bg-white/80 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate">{event.title} {label}</p>
-        <p className="text-xs text-white/70 mt-0.5">{format(parseISO(event.start_date), 'EEEE, MMM d')} · {event.location.name}</p>
+        <p className="text-xs text-white/70 mt-0.5 truncate">{format(parseISO(event.start_date), 'EEEE, MMM d')} · {event.location.name}</p>
       </div>
-      <Link href={`/events/${event.id}`} className="flex-shrink-0 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-xl px-3 py-1.5 transition-colors">
-        View →
+      <Link href={`/events/${event.id}`} className="flex-shrink-0 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-xl px-2.5 sm:px-3 py-1.5 transition-colors">
+        →
       </Link>
       <button
         onClick={() => { localStorage.setItem(dismissKey, '1'); setDismissed(true) }}
-        className="text-white/60 hover:text-white"
+        className="text-white/60 hover:text-white flex-shrink-0"
         aria-label="Dismiss"
       >
         <X className="w-4 h-4" />
@@ -254,6 +263,7 @@ function CountdownBanner({ event }: { event: EventWithDetails }) {
 function DashboardContent() {
   const router = useRouter()
   const toast = useToast()
+  const { t: dt } = useT()
   const { onlinePersonIds, people: allPeople } = useTripContext()
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
   const [events, setEvents] = useState<EventWithDetails[]>([])
@@ -393,15 +403,15 @@ function DashboardContent() {
   if (!currentPerson) return null
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+    <main className="max-w-5xl mx-auto px-3 sm:px-4 py-5 sm:py-6 space-y-4 sm:space-y-5">
       {bannerEvent && <CountdownBanner event={bannerEvent} />}
       <BirthdayBanner people={allPeople} />
 
       {onlineOthers.length > 0 && (
-        <div className="flex items-center gap-2.5 px-1">
+        <div className="flex items-center gap-2.5 px-1 flex-wrap">
           <span className="inline-flex rounded-full h-2 w-2 bg-green-400 flex-shrink-0" />
-          <span className="text-xs text-[#9c8b75] font-medium">Online now</span>
-          <div className="flex items-center gap-1">
+          <span className="text-xs text-[#9c8b75] font-medium">{dt('dashboard.onlineNow')}</span>
+          <div className="flex items-center gap-1 flex-wrap">
             {onlineOthers.slice(0, 8).map((p) => (
               <div key={p.id} className="relative" title={p.name}>
                 <PersonAvatar person={p} size="sm" />
@@ -414,29 +424,31 @@ function DashboardContent() {
       )}
 
       <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3 min-w-0">
           <PersonAvatar person={currentPerson} size="lg" />
-          <div>
-            <h1 className="text-2xl font-bold text-[#1a1614] leading-tight">
-              {currentPerson.name.split(' ')[0]}&apos;s trips
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1614] leading-tight truncate">
+              {dt('dashboard.yourTrips', { name: currentPerson.name.split(' ')[0] })}
             </h1>
-            <p className="text-sm text-[#9c8b75] mt-0.5">
+            <p className="text-sm text-[#9c8b75] mt-0.5 truncate">
               {currentPerson.status || format(t, 'EEEE, MMMM d')}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* Quick actions — hidden on mobile, since the bottom tab bar +
+            floating "+" button already provide Calendar / New event / Chat. */}
+        <div className="hidden md:flex flex-wrap gap-2 flex-shrink-0">
           <Link href="/calendar" className="inline-flex items-center gap-1.5 rounded-xl bg-[#5b4cf5] text-white px-3 py-2 text-sm font-medium hover:bg-[#4a3dd4] active:scale-[0.97] transition-all">
             <CalendarDays className="w-4 h-4" />
-            Calendar
+            {dt('nav.calendar')}
           </Link>
           <Link href="/events/new" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8] active:scale-[0.97] transition-all">
             <Plus className="w-4 h-4" />
-            New event
+            {dt('nav.newEvent')}
           </Link>
           <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#1a1614] px-3 py-2 text-sm font-medium hover:bg-[#f3efe8] active:scale-[0.97] transition-all">
             <MessageSquare className="w-4 h-4" />
-            Chat
+            {dt('nav.chat')}
           </Link>
         </div>
       </section>
@@ -446,7 +458,7 @@ function DashboardContent() {
           {nextEvent ? (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold text-[#1a1614]">Next up</h2>
+                <h2 className="text-sm font-semibold text-[#1a1614]">{dt('dashboard.nextUp')}</h2>
                 <span className="inline-flex items-center gap-1 text-xs text-[#9c8b75]">
                   <Clock className="w-3.5 h-3.5" />
                   {eventCountdownLabel(nextEvent)}
@@ -457,19 +469,19 @@ function DashboardContent() {
           ) : (
             <div className="bg-white border border-[#ede8e0] rounded-xl p-5 text-center" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
               <CalendarDays className="w-8 h-8 text-[#c9b99f] mx-auto mb-2" />
-              <h2 className="text-sm font-semibold text-[#1a1614]">No upcoming events</h2>
-              <p className="text-xs text-[#9c8b75] mt-1">Create the next trip or stay when plans are ready.</p>
-              <Link href="/events/new" className="inline-flex mt-3 text-xs font-medium text-[#5b4cf5] hover:underline">Create event</Link>
+              <h2 className="text-sm font-semibold text-[#1a1614]">{dt('dashboard.noUpcoming')}</h2>
+              <p className="text-xs text-[#9c8b75] mt-1">{dt('dashboard.noUpcomingHint')}</p>
+              <Link href="/events/new" className="inline-flex mt-3 text-xs font-medium text-[#5b4cf5] hover:underline">{dt('dashboard.createEvent')}</Link>
             </div>
           )}
 
           <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-[#1a1614]">Upcoming this month</h2>
-              <Link href="/calendar" className="text-xs text-[#5b4cf5] font-medium hover:underline">View all</Link>
+              <h2 className="text-sm font-semibold text-[#1a1614]">{dt('dashboard.upcomingMonth')}</h2>
+              <Link href="/calendar" className="text-xs text-[#5b4cf5] font-medium hover:underline">{dt('dashboard.viewAll')}</Link>
             </div>
             {monthEvents.length === 0 ? (
-              <p className="text-sm text-[#9c8b75] py-4">Nothing scheduled this month.</p>
+              <p className="text-sm text-[#9c8b75] py-4">{dt('dashboard.nothingScheduled')}</p>
             ) : (
               <div className="space-y-2">
                 {monthEvents.slice(0, 4).map((event) => {
@@ -483,7 +495,7 @@ function DashboardContent() {
                           onClick={(e) => { e.preventDefault(); void handleQuickJoin(event) }}
                           className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-[#5b4cf5] px-2 py-1 rounded-full hover:bg-[#4a3dd4] transition-all active:scale-95"
                         >
-                          <UserPlus className="w-2.5 h-2.5" /> Join
+                          <UserPlus className="w-2.5 h-2.5" /> {dt('dashboard.join')}
                         </button>
                       )}
                     </div>
@@ -500,11 +512,11 @@ function DashboardContent() {
       <section className="grid gap-5 lg:grid-cols-3">
         <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[#1a1614]">Chats</h2>
-            <Link href="/chat" className="text-xs text-[#5b4cf5] font-medium hover:underline">Open chat</Link>
+            <h2 className="text-sm font-semibold text-[#1a1614]">{dt('dashboard.chats')}</h2>
+            <Link href="/chat" className="text-xs text-[#5b4cf5] font-medium hover:underline">{dt('dashboard.openChat')}</Link>
           </div>
           {chatPreviews.length === 0 ? (
-            <p className="text-sm text-[#9c8b75] py-4">No chat groups yet.</p>
+            <p className="text-sm text-[#9c8b75] py-4">{dt('dashboard.noChatGroups')}</p>
           ) : (
             <div className="space-y-2">
               {chatPreviews.slice(0, 4).map((preview) => (
@@ -528,11 +540,11 @@ function DashboardContent() {
 
         <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[#1a1614]">Pending polls</h2>
+            <h2 className="text-sm font-semibold text-[#1a1614]">{dt('dashboard.pendingPolls')}</h2>
             <BarChart2 className="w-4 h-4 text-[#5b4cf5]" />
           </div>
           {pendingPolls.length === 0 ? (
-            <p className="text-sm text-[#9c8b75] py-4">No open polls need your vote.</p>
+            <p className="text-sm text-[#9c8b75] py-4">{dt('dashboard.noPolls')}</p>
           ) : (
             <div className="space-y-2">
               {pendingPolls.map(({ poll, sourceTitle, href }) => (
@@ -551,9 +563,9 @@ function DashboardContent() {
               <span className="w-8 h-8 rounded-lg bg-[#fdf0ea] flex items-center justify-center">
                 <Map className="w-4 h-4 text-[#e8724a]" />
               </span>
-              <h2 className="text-sm font-semibold text-[#1a1614]">Itinerary</h2>
+              <h2 className="text-sm font-semibold text-[#1a1614]">{dt('nav.itinerary')}</h2>
             </div>
-            <Link href="/itinerary" className="text-xs text-[#5b4cf5] font-medium hover:underline">View all</Link>
+            <Link href="/itinerary" className="text-xs text-[#5b4cf5] font-medium hover:underline">{dt('dashboard.viewAll')}</Link>
           </div>
           <ItineraryWidget nextEvent={nextEvent} nextItinerary={nextItinerary} />
         </div>

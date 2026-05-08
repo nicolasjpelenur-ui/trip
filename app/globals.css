@@ -137,9 +137,20 @@
   :root {
     --font-scale: 1;
   }
+  /* Use percentage so we respect the user's system text size on mobile.
+     Default 100% = browser's default (typically 16px). The scale lets users
+     bump up via Settings without overriding their OS preference. */
   html {
     @apply font-sans;
-    font-size: calc(16px * var(--font-scale));
+    font-size: calc(100% * var(--font-scale));
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  /* Hard guard against any single overflowing element forcing the entire
+     page to zoom out on mobile. */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
   }
   body {
     @apply bg-background text-foreground;
@@ -149,6 +160,12 @@
   /* Display headings using Playfair Display */
   .font-display {
     font-family: var(--font-display);
+  }
+  /* Avoid iOS zoom-on-focus by ensuring inputs never fall below 16px */
+  @media (max-width: 767px) {
+    input, textarea, select {
+      font-size: max(16px, 1rem);
+    }
   }
 }
 

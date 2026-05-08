@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { createElement } from 'react'
 import { format, parseISO } from 'date-fns'
-import { CalendarDays, ChevronRight, EyeOff, Home, MessageCircle, Users } from 'lucide-react'
+import { CalendarDays, ChevronRight, EyeOff, Home, Users } from 'lucide-react'
 import { EventWithDetails } from '@/lib/supabase'
 import { getLocationColor, getLocationIcon } from '@/lib/locationIcons'
 import { PersonAvatar } from './PersonChip'
@@ -61,8 +61,8 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
           <p className="text-xs text-[#9c8b75] mt-3 line-clamp-2">{event.notes}</p>
         )}
 
-        <div className="flex items-center justify-between gap-3 mt-3">
-          <div className="flex items-center min-w-0">
+        <div className="flex items-center justify-between gap-2 mt-3 flex-wrap">
+          <div className="flex items-center min-w-0 flex-shrink-0">
             {event.participants.slice(0, 5).map((participant, index) => (
               <span key={participant.id} style={{ marginLeft: index > 0 ? -6 : 0, zIndex: 5 - index }}>
                 <PersonAvatar person={participant.person} size="sm" />
@@ -72,7 +72,7 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
               <span className="text-[10px] text-[#9c8b75] ml-2">+{event.participants.length - 5}</span>
             )}
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-wrap min-w-0">
             {event.visibility !== 'all' && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#f3efe8] text-[#9c8b75] px-2 py-0.5 text-[10px] font-medium">
                 <EyeOff className="w-3 h-3" />
@@ -91,15 +91,8 @@ export function EventSummaryCard({ event, compact = false, showCountdown = false
                 {event.participants.length}
               </span>
             )}
-            {!compact && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#f3efe8] text-[#9c8b75] px-2 py-0.5 text-[10px] font-medium">
-                <MessageCircle className="w-3 h-3" />
-                Discuss
-              </span>
-            )}
             {href && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#5b4cf5]/10 text-[#5b4cf5] px-2 py-0.5 text-[10px] font-medium">
-                Itinerary
                 <ChevronRight className="w-3 h-3" />
               </span>
             )}

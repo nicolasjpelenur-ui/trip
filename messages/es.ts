@@ -125,6 +125,49 @@ const es = {
     installLater: 'Más tarde',
     iosHint: 'En iPhone: toca Compartir y luego "Añadir a inicio".',
   },
+  onboarding: {
+    step: 'Paso {current} de {total}',
+    closeGuide: 'Cerrar guía',
+    gotIt: 'Listo',
+    allSet: 'Todo listo',
+    createFirst: 'Crear tu primer evento',
+    welcome: {
+      title: 'Bienvenido',
+      titleNamed: 'Bienvenido, {name}',
+      body: 'Un espacio tranquilo y compartido para tu círculo. Planeen viajes juntos, sepan quién está dónde, y manténganse cerca entre visitas.',
+      tip: 'Esta guía dura un minuto, más o menos.',
+    },
+    dashboard: {
+      title: 'Tu pantalla de inicio',
+      body: 'Abre la app aquí. Verás el próximo viaje, los días que faltan, los últimos mensajes, y las votaciones que esperan tu respuesta.',
+      tip: 'Un resumen diario, a primera vista.',
+    },
+    calendar: {
+      title: 'El calendario',
+      body: 'Mira los viajes de todos en un solo calendario. Para crear un evento de varios días, arrastra a través de los días que quieras — tocar un solo día crea un evento de un día.',
+      tip: 'Arrastra entre días para un viaje más largo.',
+    },
+    events: {
+      title: 'Eventos de viaje',
+      body: 'Cada viaje es un evento. Añade quién se une, quién duerme en el apartamento, y notas. Cada persona puede unirse al viaje completo o solo a sus días.',
+      tip: 'Abre un evento para ver su itinerario completo.',
+    },
+    itinerary: {
+      title: 'Itinerario día a día',
+      body: 'Dentro de cada evento, planea cada día: un restaurante, un vuelo, un museo, donde sea. Añade hora, lugar y dirección.',
+      tip: 'Toca Itinerario en el menú para ver todos tus planes.',
+    },
+    chat: {
+      title: 'Chat grupal y mensajes',
+      body: 'Habla con todo el grupo, o envía un mensaje privado. Mantén pulsado un mensaje para reaccionar.',
+      tip: 'Un puntito naranja significa que hay mensajes sin leer.',
+    },
+    polls: {
+      title: 'Votaciones rápidas',
+      body: '¿No se ponen de acuerdo en un restaurante o una fecha? Crea una votación. Los resultados se actualizan al momento.',
+      tip: 'Las votaciones pendientes aparecen en tu Inicio.',
+    },
+  },
 } as const
 
 export default es

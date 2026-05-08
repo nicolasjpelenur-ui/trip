@@ -57,7 +57,7 @@ function ChatRoomContent({ id }: { id: string }) {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Room header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#ede8e0] bg-white">
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b border-[#ede8e0] bg-white min-w-0">
         <button onClick={() => router.back()} className="text-[#9c8b75] hover:text-[#1a1614] transition-colors flex-shrink-0">
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -86,7 +86,8 @@ function ChatRoomContent({ id }: { id: string }) {
                 <p className="text-xs text-[#9c8b75] truncate">{group.description}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Member avatars — hidden on mobile to make room for the title */}
+            <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
               <div className="flex items-center">
                 {group.members.slice(0, 4).map((p, i) => (
                   <div key={p.id} style={{ marginLeft: i > 0 ? -5 : 0 }}>
