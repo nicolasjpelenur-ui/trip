@@ -14,6 +14,7 @@ import { getLocationIcon, getLocationColor } from '@/lib/locationIcons'
 import { updateEventDates } from '@/lib/queries'
 import { canSeeEvent } from '@/lib/eventUtils'
 import { Users, MapPin, ChevronDown, Cake, CalendarDays } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const EVENT_ROW_H = 20
@@ -448,6 +449,7 @@ function MonthGrid({
 }
 
 export function CalendarGrid() {
+  const { t } = useT()
   const { events, currentMonth, setCurrentMonth, loading, people, setViewMonths, onlinePersonIds, refresh } = useTripContext()
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [createRange, setCreateRange] = useState<{ start: string; end: string } | null>(null)
@@ -555,7 +557,7 @@ export function CalendarGrid() {
           </button>
           {!isOnToday && (
             <button onClick={goToday} className="text-[11px] font-medium text-[#5b4cf5] px-2 py-1 rounded-full hover:bg-[#5b4cf5]/10 transition-colors whitespace-nowrap">
-              Today
+              {t('calendar.today')}
             </button>
           )}
         </div>
@@ -638,7 +640,7 @@ export function CalendarGrid() {
               className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${colorMode === 'location' ? 'bg-[#e8724a] text-white' : 'text-[#9c8b75] hover:bg-[#f3efe8]'}`}
             >
               {colorMode === 'location' ? <MapPin className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-              {colorMode === 'location' ? 'place' : 'person'}
+              {colorMode === 'location' ? t('calendar.place') : t('calendar.person')}
             </button>
           </div>
         </div>
@@ -653,7 +655,7 @@ export function CalendarGrid() {
       {/* Person filter */}
       {people.length > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#ede8e0] bg-white overflow-x-auto">
-          <span className="text-[11px] text-[#9c8b75] font-medium flex-shrink-0">Show:</span>
+          <span className="text-[11px] text-[#9c8b75] font-medium flex-shrink-0">{t('calendar.show')}:</span>
           {people.map((p) => (
             <button
               key={p.id}
@@ -721,10 +723,10 @@ export function CalendarGrid() {
 
       {/* Today floating pill — only visible when current view doesn't include today */}
       {(() => {
-        const t = new Date()
+        const now = new Date()
         const monthStart = startOfMonth(currentMonth)
         const monthEnd = endOfMonth(addMonths(currentMonth, viewCount - 1))
-        if (t >= monthStart && t <= monthEnd) return null
+        if (now >= monthStart && now <= monthEnd) return null
         return (
           <button
             onClick={() => setCurrentMonth(new Date())}
@@ -732,7 +734,7 @@ export function CalendarGrid() {
             style={{ boxShadow: '0 4px 16px rgba(90,50,10,0.12)' }}
           >
             <CalendarDays className="w-3.5 h-3.5" />
-            Today
+            {t('calendar.today')}
           </button>
         )
       })()}

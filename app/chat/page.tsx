@@ -11,11 +11,13 @@ import { getPeople } from '@/lib/queries'
 import { Person } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Plus, X, Lock, MessageCircle } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 const GROUP_COLORS = ['#5b4cf5', '#e8724a', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6', '#ef4444', '#84cc16']
 
 function ChatContent() {
   const router = useRouter()
+  const { t } = useT()
   const [groups, setGroups] = useState<GroupWithMembers[]>([])
   const [lastMessages, setLastMessages] = useState<Record<string, { content: string; created_at: string }>>({})
   const [unread, setUnread] = useState<Record<string, number>>({})
@@ -110,7 +112,7 @@ function ChatContent() {
       {/* Direct Messages */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold text-[#1a1614]">Direct Messages</h2>
+          <h2 className="text-base font-bold text-[#1a1614]">{t('chat.directMessages')}</h2>
         </div>
         {dmError && (
           <p className="text-xs text-red-500 mb-2 px-1">{dmError}</p>
@@ -120,7 +122,7 @@ function ChatContent() {
             {[1, 2].map((i) => <div key={i} className="skeleton h-14 rounded-2xl" />)}
           </div>
         ) : otherPeople.length === 0 ? (
-          <p className="text-sm text-[#9c8b75]">No other people on the trip yet.</p>
+          <p className="text-sm text-[#9c8b75]">{t('chat.noOthers')}</p>
         ) : (
           <div className="bg-white rounded-2xl border border-[#ede8e0] overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
             {otherPeople.map((person, i) => {
@@ -161,12 +163,12 @@ function ChatContent() {
       {/* Group Chats */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold text-[#1a1614]">Groups</h2>
+          <h2 className="text-base font-bold text-[#1a1614]">{t('chat.groups')}</h2>
           <button
             onClick={() => setCreating(true)}
             className="flex items-center gap-1.5 bg-[#5b4cf5] text-white text-xs font-medium px-3 py-1.5 rounded-xl hover:bg-[#4a3dd4] transition-colors"
           >
-            <Plus className="w-3.5 h-3.5" /> New group
+            <Plus className="w-3.5 h-3.5" /> {t('chat.newGroup')}
           </button>
         </div>
 
@@ -174,7 +176,7 @@ function ChatContent() {
         {creating && (
           <div className="bg-white rounded-2xl border border-[#ede8e0] p-4 mb-4 animate-sheet" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.08)' }}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-[#1a1614]">New group</span>
+              <span className="text-sm font-semibold text-[#1a1614]">{t('chat.newGroup')}</span>
               <button onClick={() => setCreating(false)}><X className="w-4 h-4 text-[#9c8b75]" /></button>
             </div>
             <div className="space-y-3">
@@ -254,8 +256,8 @@ function ChatContent() {
             <div className="w-12 h-12 rounded-2xl bg-[#f3efe8] flex items-center justify-center mx-auto mb-3">
               <Plus className="w-5 h-5 text-[#9c8b75]" />
             </div>
-            <p className="text-sm text-[#9c8b75]">No group chats yet</p>
-            <p className="text-xs text-[#9c8b75]/60 mt-1">Create one for your Valencia crew, Paris trip…</p>
+            <p className="text-sm text-[#9c8b75]">{t('chat.noGroups')}</p>
+            <p className="text-xs text-[#9c8b75]/60 mt-1">{t('chat.noGroupsHint')}</p>
           </div>
         ) : (
           <div className="space-y-3">

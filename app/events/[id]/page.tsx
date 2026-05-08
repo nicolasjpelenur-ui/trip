@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { TravelDetailsFields, TravelDetailsValue, transportIcon } from '@/components/TravelDetailsFields'
 import { WeatherStrip } from '@/components/WeatherStrip'
+import { useT } from '@/lib/i18n'
 import { NavBar } from '@/components/NavBar'
 import { RealtimeProvider } from '@/components/RealtimeProvider'
 import { EventComments } from '@/components/EventComments'
@@ -31,6 +32,7 @@ function JoinBanner({
   currentPerson: Person
   onJoined: () => void
 }) {
+  const { t } = useT()
   const [arrival, setArrival] = useState(event.start_date)
   const [departure, setDeparture] = useState(event.end_date)
   const [staying, setStaying] = useState(false)
@@ -67,9 +69,11 @@ function JoinBanner({
           <UserPlus className="w-4 h-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#1a1614]">You are not part of this event yet</p>
+          <p className="text-sm font-semibold text-[#1a1614]">{t('event.join.notYet')}</p>
           <p className="text-xs text-[#9c8b75] mt-0.5">
-            The event runs {totalDays} day{totalDays !== 1 ? 's' : ''} — you can join for the full stay or just the days you will be there.
+            {totalDays === 1
+              ? t('event.join.runs',       { days: totalDays })
+              : t('event.join.runsPlural', { days: totalDays })}
           </p>
         </div>
       </div>
@@ -83,22 +87,24 @@ function JoinBanner({
             className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#5b4cf5] px-4 py-2 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors"
           >
             <UserPlus className="w-4 h-4" />
-            {saving ? 'Joining…' : `Join for full stay (${format(parseISO(event.start_date), 'MMM d')} – ${format(parseISO(event.end_date), 'MMM d')})`}
+            {saving
+              ? t('event.join.joining')
+              : t('event.join.joinFull', { range: `${format(parseISO(event.start_date), 'MMM d')} – ${format(parseISO(event.end_date), 'MMM d')}` })}
           </button>
           <button
             onClick={() => setExpanded(true)}
             className="flex items-center gap-1.5 text-sm font-medium text-[#5b4cf5] px-4 py-2 rounded-xl border border-[#5b4cf5]/30 hover:bg-[#5b4cf5]/8 transition-colors"
           >
             <CalendarDays className="w-4 h-4" />
-            I am joining for different dates
+            {t('event.join.differentDates')}
           </button>
         </div>
       ) : (
         <div className="space-y-3 bg-white rounded-xl p-3 border border-[#ede8e0]">
-          <p className="text-xs font-semibold text-[#1a1614]">Choose your arrival and departure</p>
+          <p className="text-xs font-semibold text-[#1a1614]">{t('event.join.chooseDates')}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-medium text-[#9c8b75] block mb-1">Your arrival</label>
+              <label className="text-[11px] font-medium text-[#9c8b75] block mb-1">{t('event.join.yourArrival')}</label>
               <input
                 type="date"
                 value={arrival}
@@ -107,7 +113,7 @@ function JoinBanner({
               />
             </div>
             <div>
-              <label className="text-[11px] font-medium text-[#9c8b75] block mb-1">Your departure</label>
+              <label className="text-[11px] font-medium text-[#9c8b75] block mb-1">{t('event.join.yourDeparture')}</label>
               <input
                 type="date"
                 value={departure}
@@ -120,7 +126,9 @@ function JoinBanner({
 
           {isPartial && (
             <p className="text-xs text-[#5b4cf5] bg-[#5b4cf5]/8 rounded-lg px-2.5 py-1.5">
-              You will be there for {customDays} day{customDays !== 1 ? 's' : ''} out of {totalDays}. The calendar bar will extend to cover your dates.
+              {customDays === 1
+                ? t('event.join.partial',       { days: customDays, total: totalDays })
+                : t('event.join.partialPlural', { days: customDays, total: totalDays })}
             </p>
           )}
 
@@ -133,7 +141,7 @@ function JoinBanner({
             />
             <span className="text-sm text-[#6b5d4f] flex items-center gap-1.5">
               <Home className="w-3.5 h-3.5 text-[#e8724a]" />
-              I will be staying at the apartment
+              {t('event.join.stayingApt')}
             </span>
           </label>
 
@@ -146,13 +154,13 @@ function JoinBanner({
               className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold text-white bg-[#5b4cf5] py-2.5 rounded-xl hover:bg-[#4a3dd4] disabled:opacity-50 transition-colors"
             >
               <UserPlus className="w-4 h-4" />
-              {saving ? 'Joining…' : 'Confirm & join'}
+              {saving ? t('event.join.joining') : t('event.join.confirmJoin')}
             </button>
             <button
               onClick={() => setExpanded(false)}
               className="text-sm text-[#9c8b75] px-4 py-2.5 rounded-xl hover:bg-[#f3efe8] transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -163,6 +171,7 @@ function JoinBanner({
 
 /** Shows each participant with their individual date range */
 function ParticipantRoster({ event }: { event: EventWithDetails }) {
+  const { t } = useT()
   return (
     <div className="space-y-2">
       {event.participants.map((p) => {
@@ -177,12 +186,12 @@ function ParticipantRoster({ event }: { event: EventWithDetails }) {
               <p className="text-[11px] text-[#9c8b75]">
                 {hasCustom
                   ? `${format(parseISO(arrival), 'MMM d')} – ${format(parseISO(departure), 'MMM d')}`
-                  : 'Full stay'}
+                  : t('event.fullStay')}
               </p>
             </div>
             {p.staying_at_apartment && (
               <span className="flex items-center gap-1 text-[10px] font-medium text-[#e8724a] bg-[#fdf0ea] rounded-full px-2 py-0.5">
-                <Home className="w-3 h-3" /> Apt
+                <Home className="w-3 h-3" /> {t('event.apt')}
               </span>
             )}
           </div>
@@ -194,6 +203,7 @@ function ParticipantRoster({ event }: { event: EventWithDetails }) {
 
 /** Shows participants who have entered an arrival or departure time, sorted chronologically */
 function ArrivalsDeparturesPanel({ event }: { event: EventWithDetails }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const entries: { type: 'arrival' | 'departure'; date: string; time: string; participant: EventWithDetails['participants'][number] }[] = []
   for (const p of event.participants) {
@@ -213,12 +223,12 @@ function ArrivalsDeparturesPanel({ event }: { event: EventWithDetails }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-[#faf7f2] rounded-xl transition-colors"
       >
-        <span className="flex items-center gap-2 text-sm font-semibold text-[#1a1614]">
-          <CalendarDays className="w-4 h-4 text-[#5b4cf5]" />
-          Arrivals & departures
-          <span className="text-[10px] font-medium text-[#9c8b75]">({entries.length} {entries.length === 1 ? 'time' : 'times'} set)</span>
+        <span className="flex items-center gap-2 text-sm font-semibold text-[#1a1614] min-w-0 truncate">
+          <CalendarDays className="w-4 h-4 text-[#5b4cf5] flex-shrink-0" />
+          {t('event.arrivals')}
+          <span className="text-[10px] font-medium text-[#9c8b75]">({entries.length} {entries.length === 1 ? t('event.timesSet') : t('event.timesSetPlural')})</span>
         </span>
-        <span className="text-[10px] text-[#9c8b75]">{open ? 'Hide' : 'Show'}</span>
+        <span className="text-[10px] text-[#9c8b75]">{open ? t('event.hide') : t('event.show')}</span>
       </button>
       {open && (
         <div className="px-3 pb-3 pt-1 space-y-1.5 border-t border-[#e8e0d5]">
@@ -231,7 +241,7 @@ function ArrivalsDeparturesPanel({ event }: { event: EventWithDetails }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-[#1a1614] truncate">
                     <span className="font-semibold">{entry.participant.person.name.split(' ')[0]}</span>
-                    <span className="text-[#9c8b75] font-normal"> {isArrival ? 'arrives' : 'departs'} </span>
+                    <span className="text-[#9c8b75] font-normal"> {isArrival ? t('event.arrives') : t('event.departs')} </span>
                     {format(parseISO(entry.date), 'EEE MMM d')} · {entry.time.slice(0, 5)}
                   </p>
                   {entry.participant.transport_details && (
@@ -246,7 +256,7 @@ function ArrivalsDeparturesPanel({ event }: { event: EventWithDetails }) {
                 )}
                 {entry.participant.staying_at_apartment && isArrival && (
                   <span className="text-[9px] font-medium text-[#e8724a] bg-[#fdf0ea] rounded-full px-1.5 py-0.5 flex-shrink-0">
-                    Pickup
+                    {t('event.pickup')}
                   </span>
                 )}
               </div>
@@ -283,6 +293,7 @@ function PlanningReadinessBar({ itinerary, eventId }: { itinerary: ItineraryDayW
 
 function EventDetailContent({ id }: { id: string }) {
   const router = useRouter()
+  const { t } = useT()
   const [event, setEvent] = useState<EventWithDetails | null>(null)
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
   const [itinerary, setItinerary] = useState<ItineraryDayWithItems[]>([])
@@ -327,11 +338,11 @@ function EventDetailContent({ id }: { id: string }) {
     )
   }
 
-  if (!event) return <div className="text-center py-8 text-[#9c8b75]">Event not found</div>
+  if (!event) return <div className="text-center py-8 text-[#9c8b75]">{t('event.notFound')}</div>
 
   const currentPersonId = currentPerson?.id ?? null
   if (!canSeeEvent(event, currentPersonId)) {
-    return <div className="text-center py-8 text-[#9c8b75]">You do not have access to this event.</div>
+    return <div className="text-center py-8 text-[#9c8b75]">{t('event.noAccess')}</div>
   }
 
   const canEdit = canEditEvent(event, currentPersonId)
@@ -343,16 +354,16 @@ function EventDetailContent({ id }: { id: string }) {
   const stayingCount = event.participants.filter((p) => p.staying_at_apartment).length
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+    <main className="max-w-5xl mx-auto px-3 sm:px-4 py-5 sm:py-6 space-y-4 sm:space-y-5">
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <button
           onClick={() => router.back()}
           className="inline-flex items-center gap-1.5 text-sm text-[#9c8b75] hover:text-[#1a1614]"
         >
-          <ChevronLeft className="w-4 h-4" /> Back
+          <ChevronLeft className="w-4 h-4" /> {t('common.back')}
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {isParticipant && !isCreator && (
             <button
               onClick={handleLeave}
@@ -360,7 +371,7 @@ function EventDetailContent({ id }: { id: string }) {
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#ede8e0] bg-white text-[#e8724a] px-3 py-2 text-sm font-medium hover:bg-[#fdf0ea] disabled:opacity-50 transition-colors"
             >
               <UserMinus className="w-4 h-4" />
-              {leaving ? 'Leaving…' : 'Leave event'}
+              {leaving ? t('event.leaving') : t('event.leaveEvent')}
             </button>
           )}
           {canEdit && (
@@ -368,7 +379,7 @@ function EventDetailContent({ id }: { id: string }) {
               href={`/events/${event.id}/edit`}
               className="inline-flex items-center gap-1.5 rounded-xl bg-[#5b4cf5] px-3 py-2 text-sm font-medium text-white hover:bg-[#4a3dd4]"
             >
-              <Pencil className="w-4 h-4" /> Edit event
+              <Pencil className="w-4 h-4" /> {t('event.editEvent')}
             </Link>
           )}
         </div>
@@ -393,7 +404,7 @@ function EventDetailContent({ id }: { id: string }) {
         <div className="space-y-4">
           {/* Overview */}
           <div className="rounded-xl border border-[#ede8e0] bg-white p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
-            <h2 className="text-sm font-semibold text-[#1a1614] mb-3">Overview</h2>
+            <h2 className="text-sm font-semibold text-[#1a1614] mb-3">{t('event.overview')}</h2>
             <div className="space-y-2 text-sm text-[#9c8b75]">
               <p className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4 flex-shrink-0" />
@@ -402,13 +413,15 @@ function EventDetailContent({ id }: { id: string }) {
               <p className="flex items-center gap-2"><MapPin className="w-4 h-4 flex-shrink-0" /> {event.location.name}</p>
               <p className="flex items-center gap-2">
                 <Users className="w-4 h-4 flex-shrink-0" />
-                {event.participants.length} participant{event.participants.length === 1 ? '' : 's'}
+                {event.participants.length === 1
+                  ? t('event.participantSingular', { count: 1 })
+                  : t('event.participantPlural', { count: event.participants.length })}
               </p>
               {stayingCount > 0 && (
-                <p className="flex items-center gap-2"><Home className="w-4 h-4 flex-shrink-0" /> {stayingCount} staying at the apartment</p>
+                <p className="flex items-center gap-2"><Home className="w-4 h-4 flex-shrink-0" /> {t('event.stayingApt', { count: stayingCount })}</p>
               )}
               {event.visibility !== 'all' && (
-                <p className="flex items-center gap-2"><EyeOff className="w-4 h-4 flex-shrink-0" /> Private event</p>
+                <p className="flex items-center gap-2"><EyeOff className="w-4 h-4 flex-shrink-0" /> {t('event.privateEvent')}</p>
               )}
             </div>
             {event.notes && <p className="text-sm text-[#1a1614] mt-4 leading-relaxed">{event.notes}</p>}
@@ -416,7 +429,7 @@ function EventDetailContent({ id }: { id: string }) {
             {/* Participant roster with individual date ranges */}
             {event.participants.length > 0 && (
               <div className="mt-4">
-                <p className="text-xs font-medium text-[#9c8b75] mb-2">Who is going</p>
+                <p className="text-xs font-medium text-[#9c8b75] mb-2">{t('event.whoIsGoing')}</p>
                 <ParticipantRoster event={event} />
               </div>
             )}

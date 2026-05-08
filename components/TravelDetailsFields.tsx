@@ -3,6 +3,7 @@
 import { Bus, Car, ChevronDown, ChevronUp, Plane, Train } from 'lucide-react'
 import { useState } from 'react'
 import { TransportMode } from '@/lib/supabase'
+import { useT } from '@/lib/i18n'
 
 export interface TravelDetailsValue {
   arrival_time: string | null
@@ -32,6 +33,7 @@ export function TravelDetailsFields({
   onChange: (v: TravelDetailsValue) => void
   defaultOpen?: boolean
 }) {
+  const { t } = useT()
   const [open, setOpen] = useState(defaultOpen)
   const hasAny = !!(value.arrival_time || value.departure_time || value.transport_mode || value.transport_details)
 
@@ -43,10 +45,10 @@ export function TravelDetailsFields({
         className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-[#faf7f2] rounded-xl transition-colors"
       >
         <span className="text-xs font-semibold text-[#1a1614]">
-          Travel details {hasAny && <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-[#5b4cf5] align-middle" />}
+          {t('event.travel.title')} {hasAny && <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-[#5b4cf5] align-middle" />}
         </span>
         <span className="flex items-center gap-1 text-[10px] text-[#9c8b75]">
-          {open ? 'Hide' : 'Optional — add for pickup'}
+          {open ? t('event.hide') : t('event.travel.hint')}
           {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </span>
       </button>
@@ -54,7 +56,7 @@ export function TravelDetailsFields({
         <div className="px-3 pb-3 pt-1 space-y-2.5 border-t border-[#ede8e0]">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Arrival time</label>
+              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">{t('event.travel.arrivalTime')}</label>
               <input
                 type="time"
                 value={value.arrival_time ?? ''}
@@ -63,7 +65,7 @@ export function TravelDetailsFields({
               />
             </div>
             <div>
-              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Departure time</label>
+              <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">{t('event.travel.departureTime')}</label>
               <input
                 type="time"
                 value={value.departure_time ?? ''}
@@ -73,7 +75,7 @@ export function TravelDetailsFields({
             </div>
           </div>
           <div>
-            <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">How are you traveling?</label>
+            <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">{t('event.travel.howTraveling')}</label>
             <div className="flex gap-1.5">
               {MODES.map(({ id, Icon, label }) => {
                 const sel = value.transport_mode === id
@@ -96,10 +98,10 @@ export function TravelDetailsFields({
             </div>
           </div>
           <div>
-            <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">Flight or details (optional)</label>
+            <label className="text-[10px] font-medium text-[#9c8b75] block mb-1">{t('event.travel.flightDetails')}</label>
             <input
               type="text"
-              placeholder="e.g. VY1234 from MAD"
+              placeholder={t('event.travel.flightPlaceholder')}
               value={value.transport_details ?? ''}
               onChange={(e) => onChange({ ...value, transport_details: e.target.value || null })}
               maxLength={80}

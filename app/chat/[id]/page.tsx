@@ -8,11 +8,13 @@ import { ChatRoom } from '@/components/ChatRoom'
 import { PersonAvatar } from '@/components/PersonChip'
 import { GroupWithMembers, getGroupWithMembers, deleteGroup, leaveGroup } from '@/lib/chatQueries'
 import { ChevronLeft, LogOut, Trash2 } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 type ConfirmAction = 'delete' | 'leave' | null
 
 function ChatRoomContent({ id }: { id: string }) {
   const router = useRouter()
+  const { t } = useT()
   const [group, setGroup] = useState<GroupWithMembers | null>(null)
   const [confirm, setConfirm] = useState<ConfirmAction>(null)
   const [acting, setActing] = useState(false)
@@ -110,7 +112,7 @@ function ChatRoomContent({ id }: { id: string }) {
               <button
                 onClick={() => setConfirm('leave')}
                 className="p-1.5 rounded-lg text-[#9c8b75] hover:text-[#e8724a] hover:bg-[#fdf0ea] transition-colors"
-                title="Leave conversation"
+                title={t('chat.leaveConvo')}
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -120,7 +122,7 @@ function ChatRoomContent({ id }: { id: string }) {
               <button
                 onClick={() => setConfirm('delete')}
                 className="p-1.5 rounded-lg text-[#9c8b75] hover:text-[#e8724a] hover:bg-[#fdf0ea] transition-colors"
-                title="Delete group"
+                title={t('chat.deleteGroup')}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -129,16 +131,16 @@ function ChatRoomContent({ id }: { id: string }) {
         )}
 
         {confirm && (
-          <div className="flex items-center gap-2 ml-1 flex-shrink-0">
-            <span className="text-xs text-[#6b5d4f]">{confirm === 'delete' ? 'Delete group?' : 'Leave group?'}</span>
+          <div className="flex items-center gap-2 ml-1 flex-shrink-0 flex-wrap">
+            <span className="text-xs text-[#6b5d4f]">{confirm === 'delete' ? t('chat.deleteQ') : t('chat.leaveQ')}</span>
             <button
               onClick={confirm === 'delete' ? handleDelete : handleLeave}
               disabled={acting}
               className="text-xs font-medium text-white bg-red-500 px-2.5 py-1 rounded-full"
             >
-              {acting ? '…' : confirm === 'delete' ? 'Delete' : 'Leave'}
+              {acting ? '…' : confirm === 'delete' ? t('chat.deleteAction') : t('chat.leaveAction')}
             </button>
-            <button onClick={() => setConfirm(null)} className="text-xs text-[#9c8b75]">Cancel</button>
+            <button onClick={() => setConfirm(null)} className="text-xs text-[#9c8b75]">{t('common.cancel')}</button>
           </div>
         )}
       </div>

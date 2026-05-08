@@ -5,6 +5,7 @@ import { format, parseISO } from 'date-fns'
 import { Cloud, CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, Sun } from 'lucide-react'
 import { EventWithDetails } from '@/lib/supabase'
 import { DailyForecast, describeWeather, getEventWeather } from '@/lib/weatherQueries'
+import { useT } from '@/lib/i18n'
 
 const ICON_MAP = {
   sun: Sun,
@@ -21,6 +22,7 @@ const ICON_MAP = {
  * event is outside the 14-day forecast window.
  */
 export function WeatherStrip({ event }: { event: EventWithDetails }) {
+  const { t } = useT()
   const [forecast, setForecast] = useState<DailyForecast[] | null>(null)
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function WeatherStrip({ event }: { event: EventWithDetails }) {
   return (
     <div className="rounded-xl border border-[#e8e0d5] bg-white px-3 py-2.5 mb-3 overflow-x-auto" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
       <div className="flex items-center gap-3 min-w-max">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9c8b75] flex-shrink-0">Weather</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9c8b75] flex-shrink-0">{t('weather.label')}</span>
         {forecast.map((d) => {
           const { label, icon } = describeWeather(d.weatherCode)
           const Icon = ICON_MAP[icon]
