@@ -7,7 +7,6 @@ import { EventWithDetails, Person } from '@/lib/supabase'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { deleteEvent, logActivity, upsertEventParticipant, removeEventParticipant } from '@/lib/queries'
 import { getPeople } from '@/lib/queries'
-import { EventComments } from './EventComments'
 import { EventForm } from './EventForm'
 import { EventSummaryCard } from './EventSummaryCard'
 import { TravelDetailsFields, TravelDetailsValue } from './TravelDetailsFields'
@@ -174,7 +173,6 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [currentPerson, setCurrentPerson] = useState<Person | null>(null)
-  const [expandedEvent, setExpandedEvent] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [joiningId, setJoiningId] = useState<string | null>(null)
@@ -188,8 +186,6 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
   // Reset form state when the user selects a new date — NOT on every background refresh
   useEffect(() => {
     queueMicrotask(() => {
-      if (events.length === 1) setExpandedEvent(events[0].id)
-      else setExpandedEvent(null)
       setCreating(false)
       setEditingId(null)
       setJoiningId(null)
@@ -285,7 +281,6 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                 </div>
               ) : (
                 events.map((event) => {
-                  const expanded = expandedEvent === event.id
                   const isParticipant = currentPerson
                     ? event.participants.some((p) => p.person_id === currentPerson.id)
                     : false
@@ -299,12 +294,8 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                       className="bg-white rounded-2xl border border-[#ede8e0] overflow-hidden transition-all"
                       style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}
                     >
-                      <button
-                        onClick={() => setExpandedEvent(expanded ? null : event.id)}
-                        className="w-full text-left hover:bg-[#faf7f2] transition-colors"
-                      >
-                        <EventSummaryCard event={event} />
-                      </button>
+                      {/* Clicking the card navigates to the full event detail page */}
+                      <EventSummaryCard event={event} href={`/events/${event.id}`} />
 
                       {currentPerson && (
                         <div className={`mx-3.5 mt-1.5 mb-1 inline-flex items-center gap-1 text-[10px] font-semibold rounded-full px-2.5 py-0.5 ${
@@ -317,14 +308,7 @@ export function EventModal({ date, events, onClose, onRefresh, createRange }: Ev
                         </div>
                       )}
 
-                      {/* Participant dates breakdown (when any differ from event dates) */}
-                      {expanded && <ParticipantList event={event} />}
-
-                      {expanded && (
-                        <div className="px-3.5 pb-3.5">
-                          <EventComments eventId={event.id} currentPerson={currentPerson} />
-                        </div>
-                      )}
+                      <ParticipantList event={event} />
 
                       {/* Join panel */}
                       {showJoin && currentPerson && (
