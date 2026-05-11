@@ -123,7 +123,7 @@ export function NavBar() {
 
       {/* ── Fixed bottom tab bar (mobile only) ── */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#ede8e0]"
-        style={{ boxShadow: '0 -1px 12px rgba(100,60,10,0.08)' }}>
+        style={{ boxShadow: '0 -1px 12px rgba(100,60,10,0.08)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="grid grid-cols-5 h-16">
           {TAB_ITEMS.map(({ href, key, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + '/')
@@ -155,14 +155,17 @@ export function NavBar() {
         </div>
       </nav>
 
-      {/* ── Floating new-event button (mobile) ── */}
-      <Link
-        href="/events/new"
-        className="md:hidden fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-[#5b4cf5] text-white flex items-center justify-center shadow-lg hover:bg-[#4a3dd4] active:scale-95 transition-all"
-        title="New event"
-      >
-        <Plus className="w-5 h-5" />
-      </Link>
+      {/* ── Floating new-event button (mobile) — hidden inside chat rooms so it doesn't block the send button ── */}
+      {!pathname.startsWith('/chat/') && (
+        <Link
+          href="/events/new"
+          className="md:hidden fixed right-4 z-50 w-12 h-12 rounded-full bg-[#5b4cf5] text-white flex items-center justify-center shadow-lg hover:bg-[#4a3dd4] active:scale-95 transition-all"
+          style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
+          title="New event"
+        >
+          <Plus className="w-5 h-5" />
+        </Link>
+      )}
     </>
   )
 }

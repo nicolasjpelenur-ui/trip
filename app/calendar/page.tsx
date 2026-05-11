@@ -17,7 +17,7 @@ export default function CalendarPage() {
 
   return (
     <RealtimeProvider>
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col app-screen">
         <NavBar />
         <div className="flex-1 overflow-hidden">
           <CalendarGrid />

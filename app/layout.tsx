@@ -37,7 +37,9 @@ export const viewport: Viewport = {
   themeColor: "#5b4cf5",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  // Keep maximumScale at 3 (not 1) so users can still pinch-zoom for accessibility,
+  // but lower than 5 to prevent iOS from snapping to a jarring zoom on first load.
+  maximumScale: 3,
   viewportFit: "cover",
 };
 

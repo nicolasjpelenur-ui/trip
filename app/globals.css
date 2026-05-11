@@ -161,10 +161,12 @@
   .font-display {
     font-family: var(--font-display);
   }
-  /* Avoid iOS zoom-on-focus by ensuring inputs never fall below 16px */
+  /* Avoid iOS zoom-on-focus by ensuring inputs never fall below 16px.
+     !important is required because @layer base has lower cascade priority
+     than @layer utilities, so Tailwind's text-sm etc. would otherwise win. */
   @media (max-width: 767px) {
     input, textarea, select {
-      font-size: max(16px, 1rem);
+      font-size: max(16px, 1rem) !important;
     }
   }
 }
@@ -225,8 +227,25 @@
 
 /* ── Mobile bottom tab bar ── */
 @media (max-width: 767px) {
+  /* Account for the 64px fixed nav bar plus the iPhone home-indicator safe area */
   .page-content {
-    padding-bottom: 64px;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Full-height screen layout for pages that own their own scroll (chat, calendar).
+   Uses dvh (dynamic viewport height) so the height shrinks correctly when
+   the iOS keyboard slides up. Fallback to 100vh for older browsers.
+   On mobile: padding-bottom reserves space for the fixed 64 px nav bar + safe area.
+   On desktop the class is a no-op — the sidebar layout handles everything. ── */
+.app-screen {
+  height: 100vh;     /* fallback for browsers without dvh */
+  height: 100dvh;    /* preferred: updates when the keyboard appears / disappears */
+  overflow: hidden;
+}
+@media (max-width: 767px) {
+  .app-screen {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 }
 

@@ -148,7 +148,7 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
       </div>
 
       {/* Input */}
-      <div className="border-t border-[#ede8e0] px-4 py-3 bg-white">
+      <div className="border-t border-[#ede8e0] px-4 pt-3 pb-3 bg-white shrink-0">
         <div className="flex items-end gap-2">
           <button
             onClick={() => setShowPollCreator((v) => !v)}

@@ -155,7 +155,7 @@ export default function ChatRoomPage() {
 
   return (
     <RealtimeProvider>
-      <div className="flex flex-col h-screen bg-[#faf7f2]">
+      <div className="flex flex-col app-screen bg-[#faf7f2]">
         <NavBar />
         <ChatRoomContent id={id} />
       </div>
