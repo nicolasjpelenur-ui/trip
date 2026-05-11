@@ -45,6 +45,16 @@ export function ChatRoom({ groupId, currentPersonId }: ChatRoomProps) {
     bottomRef.current?.scrollIntoView({ behavior })
   }, [])
 
+  // When the iOS keyboard opens the visual viewport shrinks (dvh updates).
+  // Re-scroll to bottom so the latest message isn't hidden behind the keyboard.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => scrollToBottom('instant')
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [scrollToBottom])
+
   useEffect(() => {
     loadPolls()
     getMessages(groupId).then((msgs) => {

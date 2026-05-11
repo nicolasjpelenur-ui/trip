@@ -155,7 +155,10 @@ export default function ChatRoomPage() {
 
   return (
     <RealtimeProvider>
-      <div className="flex flex-col app-screen bg-[#faf7f2]">
+      {/* Chat rooms hide the bottom nav bar (see NavBar.tsx), so we don't
+          need pb-16 padding here. h-dvh shrinks when the iOS keyboard opens,
+          which floats the input directly above the keyboard. */}
+      <div className="flex flex-col bg-[#faf7f2] overflow-hidden" style={{ height: '100dvh' }}>
         <NavBar />
         <ChatRoomContent id={id} />
       </div>

@@ -121,41 +121,44 @@ export function NavBar() {
         </div>
       </header>
 
-      {/* ── Fixed bottom tab bar (mobile only) ── */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#ede8e0]"
-        style={{ boxShadow: '0 -1px 12px rgba(100,60,10,0.08)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="grid grid-cols-5 h-16">
-          {TAB_ITEMS.map(({ href, key, Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + '/')
-            const isChat = href === '/chat'
-            const label = t(`nav.${key}`)
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`relative flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95 ${
-                  active ? 'text-[#5b4cf5]' : 'text-[#9c8b75]'
-                }`}
-              >
-                <div className="relative">
-                  <Icon className={`w-5 h-5 transition-transform ${active ? 'scale-110' : ''}`} />
-                  {isChat && chatUnread && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#e8724a]" />
+      {/* ── Fixed bottom tab bar — hidden inside chat rooms so the input floats
+           directly above the keyboard with no dead gap ── */}
+      {!pathname.startsWith('/chat/') && (
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#ede8e0]"
+          style={{ boxShadow: '0 -1px 12px rgba(100,60,10,0.08)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          <div className="grid grid-cols-5 h-16">
+            {TAB_ITEMS.map(({ href, key, Icon }) => {
+              const active = pathname === href || pathname.startsWith(href + '/')
+              const isChat = href === '/chat'
+              const label = t(`nav.${key}`)
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95 ${
+                    active ? 'text-[#5b4cf5]' : 'text-[#9c8b75]'
+                  }`}
+                >
+                  <div className="relative">
+                    <Icon className={`w-5 h-5 transition-transform ${active ? 'scale-110' : ''}`} />
+                    {isChat && chatUnread && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#e8724a]" />
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-medium leading-none ${active ? 'text-[#5b4cf5]' : 'text-[#9c8b75]'}`}>
+                    {label}
+                  </span>
+                  {active && (
+                    <span className="absolute bottom-0 w-8 h-0.5 bg-[#5b4cf5] rounded-full" />
                   )}
-                </div>
-                <span className={`text-[10px] font-medium leading-none ${active ? 'text-[#5b4cf5]' : 'text-[#9c8b75]'}`}>
-                  {label}
-                </span>
-                {active && (
-                  <span className="absolute bottom-0 w-8 h-0.5 bg-[#5b4cf5] rounded-full" />
-                )}
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
+                </Link>
+              )
+            })}
+          </div>
+        </nav>
+      )}
 
-      {/* ── Floating new-event button (mobile) — hidden inside chat rooms so it doesn't block the send button ── */}
+      {/* ── Floating new-event button — hidden on any /chat/ route ── */}
       {!pathname.startsWith('/chat/') && (
         <Link
           href="/events/new"

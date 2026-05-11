@@ -140,15 +140,16 @@ function ItineraryWidget({ nextEvent, nextItinerary }: { nextEvent: EventWithDet
             {eventInProgress && todayDay ? 'Today' : format(parseISO(displayDay.day_date), 'EEE, MMM d')}
           </p>
           {displayDay.items.slice(0, 3).map((item) => (
-            <div key={item.id} className="flex items-start gap-2 rounded-lg bg-[#f3efe8] px-2.5 py-1.5">
+            <div key={item.id} className="flex items-center gap-2 rounded-lg bg-[#f3efe8] px-2.5 py-1.5 overflow-hidden">
               {item.start_time && (
-                <span className="text-[10px] text-[#9c8b75] font-medium mt-0.5 w-10 flex-shrink-0">
+                <span className="text-[10px] text-[#9c8b75] font-medium w-10 flex-shrink-0">
                   {item.start_time.slice(0, 5)}
                 </span>
               )}
-              <span className="text-xs text-[#1a1614] font-medium truncate">{item.title}</span>
+              {/* min-w-0 is required for truncate to work inside a flex child */}
+              <span className="text-xs text-[#1a1614] font-medium truncate min-w-0 flex-1">{item.title}</span>
               {item.place_name && (
-                <span className="text-[10px] text-[#9c8b75] truncate ml-auto flex-shrink-0">{item.place_name}</span>
+                <span className="text-[10px] text-[#9c8b75] truncate flex-shrink-0 max-w-[40%]">{item.place_name}</span>
               )}
             </div>
           ))}
@@ -403,7 +404,7 @@ function DashboardContent() {
   if (!currentPerson) return null
 
   return (
-    <main className="max-w-5xl mx-auto px-3 sm:px-4 py-5 sm:py-6 space-y-4 sm:space-y-5">
+    <main className="max-w-5xl mx-auto px-3 sm:px-4 py-5 sm:py-6 space-y-4 sm:space-y-5 overflow-x-hidden">
       {bannerEvent && <CountdownBanner event={bannerEvent} />}
       <BirthdayBanner people={allPeople} />
 
@@ -510,7 +511,7 @@ function DashboardContent() {
       </section>
 
       <section className="grid gap-5 lg:grid-cols-3">
-        <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+        <div className="bg-white border border-[#ede8e0] rounded-xl p-4 overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-[#1a1614]">{dt('dashboard.chats')}</h2>
             <Link href="/chat" className="text-xs text-[#5b4cf5] font-medium hover:underline">{dt('dashboard.openChat')}</Link>
@@ -520,25 +521,25 @@ function DashboardContent() {
           ) : (
             <div className="space-y-2">
               {chatPreviews.slice(0, 4).map((preview) => (
-                <Link key={preview.group.id} href={`/chat/${preview.group.id}`} className="flex items-center gap-3 rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] hover:border-[#5b4cf5]/20 transition-all active:scale-[0.98]">
+                <Link key={preview.group.id} href={`/chat/${preview.group.id}`} className="flex items-center gap-3 rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] hover:border-[#5b4cf5]/20 transition-all active:scale-[0.98] overflow-hidden">
                   <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${preview.group.color}1f` }}>
                     <MessageSquare className="w-4 h-4" style={{ color: preview.group.color }} />
                   </span>
-                  <span className="min-w-0 flex-1">
+                  <span className="min-w-0 flex-1 overflow-hidden">
                     <span className="flex items-center gap-2">
                       <span className="text-sm font-medium text-[#1a1614] truncate">{preview.group.is_dm ? preview.group.members.find((member) => member.id !== currentPerson.id)?.name ?? 'Direct message' : preview.group.name}</span>
                       {preview.unread && <span className="w-2 h-2 rounded-full bg-[#e8724a] flex-shrink-0" />}
                     </span>
                     <span className="block text-xs text-[#9c8b75] truncate">{preview.lastMessage}</span>
                   </span>
-                  <ChevronRight className="w-4 h-4 text-[#c9b99f]" />
+                  <ChevronRight className="w-4 h-4 text-[#c9b99f] flex-shrink-0" />
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+        <div className="bg-white border border-[#ede8e0] rounded-xl p-4 overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-[#1a1614]">{dt('dashboard.pendingPolls')}</h2>
             <BarChart2 className="w-4 h-4 text-[#5b4cf5]" />
@@ -550,22 +551,22 @@ function DashboardContent() {
               {pendingPolls.map(({ poll, sourceTitle, href }) => (
                 <Link key={poll.id} href={href} className="block rounded-xl border border-[#ede8e0] px-3 py-2 hover:bg-[#f3efe8] hover:border-[#5b4cf5]/20 transition-all active:scale-[0.98]">
                   <p className="text-sm font-medium text-[#1a1614] line-clamp-2">{poll.question}</p>
-                  <p className="text-xs text-[#9c8b75] mt-1">{sourceTitle} · {poll.options.length} options</p>
+                  <p className="text-xs text-[#9c8b75] mt-1 truncate">{sourceTitle} · {poll.options.length} options</p>
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        <div className="bg-white border border-[#ede8e0] rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
+        <div className="bg-white border border-[#ede8e0] rounded-xl p-4 overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(100,60,10,0.07)' }}>
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-lg bg-[#fdf0ea] flex items-center justify-center">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-8 h-8 rounded-lg bg-[#fdf0ea] flex items-center justify-center flex-shrink-0">
                 <Map className="w-4 h-4 text-[#e8724a]" />
               </span>
-              <h2 className="text-sm font-semibold text-[#1a1614]">{dt('nav.itinerary')}</h2>
+              <h2 className="text-sm font-semibold text-[#1a1614] truncate">{dt('nav.itinerary')}</h2>
             </div>
-            <Link href="/itinerary" className="text-xs text-[#5b4cf5] font-medium hover:underline">{dt('dashboard.viewAll')}</Link>
+            <Link href="/itinerary" className="text-xs text-[#5b4cf5] font-medium hover:underline flex-shrink-0 ml-2">{dt('dashboard.viewAll')}</Link>
           </div>
           <ItineraryWidget nextEvent={nextEvent} nextItinerary={nextItinerary} />
         </div>

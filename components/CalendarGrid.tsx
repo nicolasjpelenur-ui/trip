@@ -180,6 +180,9 @@ function MonthGrid({
   }
 
   function handleDayPointerDown(e: React.PointerEvent<HTMLButtonElement>, day: Date) {
+    // Drag-to-create is mouse-only. On touch any finger movement should scroll
+    // the calendar, not accidentally open the new-event flow.
+    if (e.pointerType !== 'mouse') return
     dragPointerIdRef.current = e.pointerId
     didDragRangeRef.current = false
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -188,6 +191,8 @@ function MonthGrid({
   }
 
   function handleDayPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
+    // Only runs for mouse (touch bails in handleDayPointerDown so
+    // dragPointerIdRef.current is always null for touch events here).
     if (dragPointerIdRef.current !== e.pointerId || !dragStart) return
     const day = getPointerDay(e)
     if (!day) return
@@ -195,7 +200,6 @@ function MonthGrid({
       didDragRangeRef.current = true
       setDragEnd(day)
     }
-    if (e.pointerType !== 'mouse') e.preventDefault()
   }
 
   function handleDayPointerEnter(day: Date) {
@@ -203,23 +207,22 @@ function MonthGrid({
   }
 
   function handleDayPointerUp(e: React.PointerEvent<HTMLButtonElement>, day: Date) {
-    const endDay = getPointerDay(e) ?? dragEnd ?? day
     const isTouchLike = e.pointerType !== 'mouse'
 
-    if (dragStart && !isSameDay(dragStart, endDay)) {
-      openRange(dragStart, endDay)
-    } else if (isTouchLike && !didDragRangeRef.current) {
-      if (tapRangeStart && !isSameDay(tapRangeStart, day)) {
-        openRange(tapRangeStart, day)
-      } else if (tapRangeStart && isSameDay(tapRangeStart, day)) {
-        setTapRangeStart(null)
-        onDayClick(day)
-      } else {
-        setTapRangeStart(day)
-      }
-    } else {
+    if (isTouchLike) {
+      // Touch: simple single-tap opens the day modal. No drag-select, no two-tap
+      // range — any swipe just scrolls the calendar (touchAction: manipulation).
       setTapRangeStart(null)
       onDayClick(day)
+    } else {
+      // Mouse: drag-to-create range or single-click to open day
+      const endDay = getPointerDay(e) ?? dragEnd ?? day
+      if (dragStart && !isSameDay(dragStart, endDay)) {
+        openRange(dragStart, endDay)
+      } else {
+        setTapRangeStart(null)
+        onDayClick(day)
+      }
     }
 
     dragPointerIdRef.current = null
@@ -234,6 +237,8 @@ function MonthGrid({
     event: EventWithDetails,
     weekStart: Date,
   ) => {
+    // Resize is desktop-only — ignore touch so scrolling isn't accidentally captured.
+    if (e.pointerType !== 'mouse') return
     e.stopPropagation()
     e.preventDefault()
     const rowKey = weekStart.toISOString()
@@ -352,7 +357,7 @@ function MonthGrid({
                             ? 'opacity-30 hover:bg-[#f3efe8]/60'
                             : 'hover:bg-[#f3efe8]/60 active:bg-[#ede8e0]'
                       }`}
-                      style={{ minHeight: compact ? 70 : 88, padding: '3px 3px 2px 3px', touchAction: 'none' }}
+                      style={{ minHeight: compact ? 70 : 88, padding: '3px 3px 2px 3px', touchAction: 'manipulation' }}
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${
@@ -425,10 +430,10 @@ function MonthGrid({
                           <span className="text-white text-[9px] font-medium truncate leading-none">{event.title}</span>
                         </>
                       )}
-                      {/* Resize handle */}
+                      {/* Resize handle — desktop (mouse) only */}
                       {endsHere && (
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize flex items-center justify-center"
+                          className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize hidden md:flex items-center justify-center"
                           style={{ zIndex: 20 }}
                           onPointerDown={(e) => handleResizePointerDown(e, event, weekStart)}
                           onClick={(e) => e.stopPropagation()}
